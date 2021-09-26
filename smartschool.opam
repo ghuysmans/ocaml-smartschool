@@ -1,0 +1,14 @@
+opam-version: "2.0"
+name: "smartschool"
+version: "dev"
+maintainer: "Guillaume Huysmans <ghuysmans99@gmail.com>"
+authors: "Guillaume Huysmans <ghuysmans99@gmail.com>"
+homepage: "https://github.com/ghuysmans/smartschool/"
+bug-reports: "https://github.com/ghuysmans/smartschool/issues"
+dev-repo: "git+https://github.com/ghuysmans/smartschool/"
+build: [["dune" "build" "-p" name "-j" jobs]]
+depends: [
+  "dune" {>= "2.7"}
+  "glical"
+]
+synopsis: "SmartSchool client library for OCaml"
