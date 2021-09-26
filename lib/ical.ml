@@ -50,12 +50,10 @@ let parse raw =
         | _ -> failwith "incomplete event"
         end
       | _ -> acc
-    ) []
+    ) [] |>
+    List.filter_map (fun event ->
+      match String.split_on_char ',' event.summary |> List.map String.trim with
+      | [class_; subject; room] -> Some {event; class_; subject; room}
+      | _ -> None (* probably a holiday *)
+    )
   | _ -> failwith "not a calendar"
-
-let of_smartschool =
-  List.filter_map (fun event ->
-    match String.split_on_char ',' event.summary |> List.map String.trim with
-    | [class_; subject; room] -> Some {event; class_; subject; room}
-    | _ -> None (* probably a holiday *)
-  )

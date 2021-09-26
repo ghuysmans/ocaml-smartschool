@@ -19,7 +19,7 @@ let weekday {Glical.Datetime.year; month; day; _} =
 
 
 let () =
-  let l = Glical.file_contents Sys.argv.(1) |> parse |> of_smartschool in
+  let l = Glical.file_contents Sys.argv.(1) |> parse in
   let show f lbl =
     print_endline @@ lbl ^ ":";
     List.map (fun x -> "- " ^ f x) l |>
