@@ -8,6 +8,12 @@ type t = {
   location: string option;
 }
 
+let string_of_date {Datetime.year; month; day; _} =
+  Printf.sprintf "%02d/%02d/%d" day month year
+
+let string_of_time {Datetime.hours; minutes; _} =
+  Printf.sprintf "%02d:%02d" hours minutes
+
 type course = {
   event: t;
   class_: string;
