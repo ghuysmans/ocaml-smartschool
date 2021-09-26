@@ -1,1 +1,1 @@
-(executable (name jdc) (libraries smartschool))
+(executable (name jdc) (libraries smartschool unix))
