@@ -31,10 +31,15 @@ module Course = struct
     l: Student_group.t list [@key "studentGroup"];
   } [@@deriving protocol ~driver:(module Xml_light)]
 
+  type status =
+    | Active [@key "1"]
+    | Inactive [@key "0"]
+    [@@deriving protocol ~driver:(module Xml_light)]
+
   type t = {
     name: string;
     description: string;
-    active: int;
+    status: status [@key "active"];
     main_teacher: Teacher.t [@key "mainTeacher"];
     co_teachers: co_teachers [@key "coTeachers"];
     student_groups: student_groups [@key "studentGroups"];

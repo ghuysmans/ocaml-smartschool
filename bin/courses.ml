@@ -11,5 +11,7 @@ let () =
         List.map (fun (g : Student_group.t) -> "\"" ^ g.description ^ "\"") |>
         String.concat ", "
       in
-      Printf.printf "%s: %s (%s)\n" c.main_teacher.username c.name groups
+      Printf.printf "%s%s: %s (%s)\n"
+        (match c.status with Active -> "" | Inactive -> "* ")
+        c.main_teacher.username c.name groups
     )
