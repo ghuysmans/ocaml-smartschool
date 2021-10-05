@@ -10,5 +10,7 @@ build: [["dune" "build" "-p" name "-j" jobs]]
 depends: [
   "dune" {>= "2.7"}
   "glical"
+  "ppx_protocol_conv_xml_light"
+  "ppx_protocol_conv_json"
 ]
-synopsis: "SmartSchool client library for OCaml"
+synopsis: "Smartschool client library for OCaml"
