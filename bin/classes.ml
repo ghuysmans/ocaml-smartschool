@@ -6,6 +6,6 @@ let () =
   | Error e -> failwith (Json.error_to_string_hum e)
   | Ok l ->
     l |> List.iter (fun c ->
-      Printf.printf "%s : %s, %sofficial\n"
-        c.code c.untis (if c.official then "" else "un")
+      Printf.printf "%s\t%c\t%s\n"
+        c.code (if c.official then 'O' else ' ') c.untis
     )
