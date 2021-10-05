@@ -4,8 +4,4 @@ open Smartschool.Classes
 let () =
   match of_json (Yojson.Safe.from_file Sys.argv.(1)) with
   | Error e -> failwith (Json.error_to_string_hum e)
-  | Ok l ->
-    l |> List.iter (fun c ->
-      Printf.printf "%s\t%c\t%s\n"
-        c.code (if c.official then 'O' else ' ') c.untis
-    )
+  | Ok l -> l |> List.iter (fun c -> Printf.printf "%s\t%s\n" c.code c.untis)

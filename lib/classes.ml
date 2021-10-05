@@ -15,9 +15,9 @@ type class_ = {
   code: string;
   name: string;
   desc: string;
-  official: bool [@key "isOfficial"];
   (*
-  isOfficial = false
+  isOfficial = true
+  isGroup = false
   isClass = true
   *)
   visible: bool [@key "isVisible"];
