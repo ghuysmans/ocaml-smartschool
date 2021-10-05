@@ -1,3 +1,5 @@
+open Protocol_conv_json
+
 module Status = struct
   (* FIXME check names *)
   type t =
@@ -18,16 +20,11 @@ module Status = struct
     | Unknown_reason [@name "-"]
     | Temporary [@name "I"]
     | Summoned [@name "C"]
-    [@@deriving yojson]
+    [@@deriving protocol ~driver:(module Json)]
 
-  let of_yojson = function
-    | `String "" -> Ok Present
-    | yo -> of_yojson (`List [yo])
-
-  let to_yojson t =
-    match to_yojson t with
-    | `List [`String x] -> `String x
-    | _ -> assert false
+  let of_json_exn = function
+    | `String "" -> Present
+    | yo -> of_json_exn yo
 
   let to_french = function
     | Present -> "Présence"
@@ -52,6 +49,6 @@ end
 type day = {
   am: Status.t;
   pm: Status.t;
-} [@@deriving yojson]
+} [@@deriving protocol ~driver:(module Json)]
 
-type t = day Assoc.t [@@deriving yojson]
+type t = day Assoc.t [@@deriving protocol ~driver:(module Json)]

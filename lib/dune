@@ -1,4 +1,4 @@
 (library
  (name smartschool)
- (libraries glical ppx_protocol_conv_xml_light)
- (preprocess (pps ppx_protocol_conv ppx_deriving_yojson)))
+ (libraries glical ppx_protocol_conv_xml_light ppx_protocol_conv_json)
+ (preprocess (pps ppx_protocol_conv)))
