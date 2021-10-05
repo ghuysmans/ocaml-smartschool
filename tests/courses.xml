@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<courses>
+  <course>
+    <name>name</name>
+    <description>description</description>
+    <active>0</active>
+    <mainTeacher>
+      <firstname>Alice</firstname>
+      <lastname>Smith</lastname>
+      <username>smital</username>
+    </mainTeacher>
+    <studentGroups>
+      <studentGroup>
+        <name>class</name>
+        <description>d</description>
+        <type>K</type>
+      </studentGroup>
+      <studentGroup>
+        <name>group</name>
+        <description>d</description>
+        <type>G</type>
+      </studentGroup>
+    </studentGroups>
+  </course>
+</courses>
