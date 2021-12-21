@@ -2,4 +2,7 @@
 (executable (name courses) (modules courses) (libraries smartschool))
 (executable (name attendance) (modules attendance) (libraries smartschool))
 (executable (name classes) (modules classes) (libraries smartschool))
-(executable (name send) (modules send) (libraries smartschool_soap merge))
+(executable
+ (name send) (modules send)
+ (libraries smartschool_soap merge_omd csv)
+ (preprocess (pps lwt_ppx)))
