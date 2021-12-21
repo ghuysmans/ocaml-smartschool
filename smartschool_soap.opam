@@ -1,0 +1,18 @@
+opam-version: "2.0"
+name: "smartschool_soap"
+version: "dev"
+maintainer: "Guillaume Huysmans <ghuysmans99@gmail.com>"
+authors: "Guillaume Huysmans <ghuysmans99@gmail.com>"
+homepage: "https://github.com/ghuysmans/ocaml-smartschool/"
+bug-reports: "https://github.com/ghuysmans/ocaml-smartschool/issues"
+dev-repo: "git+https://github.com/ghuysmans/ocaml-smartschool/"
+build: [["dune" "build" "-p" name "-j" jobs]]
+depends: [
+  "dune" {>= "2.7"}
+  "cohttp-lwt-unix"
+  "xml-light"
+  "base64" {>= "3.1.0"}
+  "ppx_deriving_yojson"
+  "lwt_ppx"
+]
+synopsis: "Smartschool client library for OCaml - SOAP client"
