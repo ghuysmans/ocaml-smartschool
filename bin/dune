@@ -6,3 +6,7 @@
  (name send) (modules send)
  (libraries smartschool_soap merge_omd csv)
  (preprocess (pps lwt_ppx)))
+(executable
+ (name secondary) (modules secondary)
+ (libraries smartschool_soap)
+ (preprocess (pps lwt_ppx)))

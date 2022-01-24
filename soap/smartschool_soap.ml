@@ -51,3 +51,47 @@ let send_message ~access_code ~from ~to_ ~title ?(lvs=false) ?(attachments=[]) b
     Lwt.return_unit
   else
     Lwt.fail_with "sendMsg"
+
+
+let extract ~request_element raw =
+  match Xml.parse_string raw with
+  | Xml.Element ("SOAP-ENV:Envelope", _, [
+      Element ("SOAP-ENV:Body", _, [
+      Element (t, _, [
+      Element ("return", _, [PCData x])])])])
+      when t = "ns1:" ^ request_element ^ "Response" ->
+    Lwt.return x
+  | _ -> Lwt.fail_with "extract"
+
+let get_user ~access_code username =
+  let body =
+    Printf.sprintf "<username>%s</username>" (escape username) |>
+    with_envelope ~access_code ~request_element:"getUserDetailsByUsername" |>
+    Cohttp_lwt.Body.of_string
+  in
+  let open Lwt.Infix in
+  Cohttp_lwt_unix.Client.post ~body uri >>= fun (resp, body) ->
+  if Cohttp.Response.status resp = `OK then
+    Cohttp_lwt.Body.to_string body >>=
+    extract ~request_element:"getUserDetailsByUsername" >|=
+    Yojson.Safe.from_string >|=
+    Smartschool.Users.user_of_json
+  else
+    Lwt.fail_with "getUserDetailsByUsername"
+
+let get_all_users ~access_code ~recursive code =
+  let body =
+    let recu = if recursive then 1 else 0 in
+    Printf.sprintf "<code>%s</code><recursive>%d</recursive>" (escape code) recu |>
+    with_envelope ~access_code ~request_element:"getAllAccountsExtended" |>
+    Cohttp_lwt.Body.of_string
+  in
+  let open Lwt.Infix in
+  Cohttp_lwt_unix.Client.post ~body uri >>= fun (resp, body) ->
+  if Cohttp.Response.status resp = `OK then
+    Cohttp_lwt.Body.to_string body >>=
+    extract ~request_element:"getAllAccountsExtended" >|=
+    Yojson.Safe.from_string >|=
+    Smartschool.Users.of_json
+  else
+    Lwt.fail_with "getAllAccountsExtended"
