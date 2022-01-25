@@ -2,7 +2,7 @@ open Smartschool_soap
 
 let () = Lwt_main.run (
   let access_code = read_line () in
-  match%lwt get_all_users ~access_code ~recursive:false "4EQE" with
+  match%lwt get_all_users ~access_code ~recursive:false Sys.argv.(1) with
   | Error e -> failwith (Protocol_conv_json.Json.error_to_string_hum e)
   | Ok l ->
     l |> List.iter (fun (u : Smartschool.Users.user) ->
