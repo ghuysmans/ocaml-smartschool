@@ -67,6 +67,9 @@ type user = {
   yubikey: bool [@key "isYubikeyEnabled"];
   groups: group list;
   coaccounts: Coaccount.t array [@default [||]];
+  last_login: string [@key "last_successful_login"];
+  last_login_co1: string [@key "last_successful_login_coaccount1"];
+  last_login_co2: string [@key "last_successful_login_coaccount2"];
 } [@@deriving protocol ~driver:(module Json)]
 
 let user_of_json_exn j =
