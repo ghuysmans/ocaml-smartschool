@@ -19,7 +19,7 @@ type user = {
   firstname: string [@key "voornaam"];
   lastname: string [@key "naam"];
   username: string [@key "gebruikersnaam"];
-  status: string [@key "status"]; (* FIXME actief <-> true *)
+  status: string [@key "status"];
   gender: Gender.t [@key "geslacht"];
   birthdate: string [@key "geboortedatum"]; (* FIXME *)
   email_verified: bool [@key "isEmailVerified"];
