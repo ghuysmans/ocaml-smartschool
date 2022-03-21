@@ -2,7 +2,7 @@ open Smartschool_soap
 
 let () = Lwt_main.run (
   match Sys.argv with
-  | [| _; "-data"; d; "-template"; t |] ->
+  | [| _; "-from"; from; "-data"; d; "-template"; t |] ->
     begin match Csv.load d with
     | [] -> Lwt.return_unit
     | header :: data ->
@@ -17,10 +17,10 @@ let () = Lwt_main.run (
         let%lwt () = Lwt_io.printl (fst to_) in
         List.map (Merge_omd.map get) template |>
         Omd.to_html |>
-        send_message ~access_code ~from:"huysgu" ~to_ ~title
+        send_message ~access_code ~from ~to_ ~title
       )
     end
   | _ ->
-    Printf.eprintf "usage: %s -data data.csv -template tpl.md\n" Sys.argv.(0);
+    Printf.eprintf "usage: %s -from user -data data.csv -template tpl.md\n" Sys.argv.(0);
     exit 1
 )
