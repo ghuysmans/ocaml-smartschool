@@ -23,7 +23,18 @@ type attachment = {
 
 let escape x = Xml.(to_string (PCData x))
 
+let extract ~request_element raw =
+  match Xml.parse_string raw with
+  | Xml.Element ("SOAP-ENV:Envelope", _, [
+      Element ("SOAP-ENV:Body", _, [
+      Element (t, _, [
+      Element ("return", _, [PCData x])])])])
+      when t = "ns1:" ^ request_element ^ "Response" ->
+    Lwt.return x
+  | _ -> Lwt.fail_with "extract"
+
 let send_message ~access_code ~from ~to_ ~title ?(lvs=false) ?(attachments=[]) body =
+  let request_element = "sendMsg" in
   let body =
     let uid, coaccount = to_ in
     let attachments =
@@ -42,26 +53,23 @@ let send_message ~access_code ~from ~to_ ~title ?(lvs=false) ?(attachments=[]) b
       <coaccount>%d</coaccount>
       <copyToLVS>%s</copyToLVS>
     |} uid (escape title) (escape body) from attachments coaccount lvs |>
-    with_envelope ~access_code ~request_element:"sendMsg" |>
+    with_envelope ~access_code ~request_element |>
     Cohttp_lwt.Body.of_string
   in
   let open Lwt.Infix in
-  Cohttp_lwt_unix.Client.post ~body uri >>= fun (resp, _body) ->
+  Cohttp_lwt_unix.Client.post ~body uri >>= fun (resp, body) ->
   if Cohttp.Response.status resp = `OK then
-    Lwt.return_unit
+    Cohttp_lwt.Body.to_string body >>=
+    extract ~request_element >|=
+    Yojson.Safe.from_string >|= function
+      | `Int 0 -> Ok ()
+      | `Int 8 -> Error `Access_code
+      | `Int 12 -> Error `Account
+      | `Int e -> Error (`Code e)
+      | _ -> Error `NaN
   else
     Lwt.fail_with "sendMsg"
 
-
-let extract ~request_element raw =
-  match Xml.parse_string raw with
-  | Xml.Element ("SOAP-ENV:Envelope", _, [
-      Element ("SOAP-ENV:Body", _, [
-      Element (t, _, [
-      Element ("return", _, [PCData x])])])])
-      when t = "ns1:" ^ request_element ^ "Response" ->
-    Lwt.return x
-  | _ -> Lwt.fail_with "extract"
 
 let get_user ~access_code username =
   let body =
