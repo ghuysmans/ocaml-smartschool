@@ -11,7 +11,9 @@ let () = Lwt_main.run (
       "type";
       "official_class"; "lastname"; "firstname";
       "role"; "rel_lastname"; "rel_firstname";
-      "rel_coaccount";
+      "username";
+      "coaccount";
+      "teacher";
       "error"
     ];
     let dummy = {
@@ -33,11 +35,22 @@ let () = Lwt_main.run (
         | g :: _ -> g.code
       in
       let show typ i (c : Coaccount.t) msg =
+        let teacher =
+          if class_ = "?" then
+            if c == dummy then
+              u.lastname ^ " " ^ u.firstname
+            else
+              c.lastname ^ " " ^ c.firstname
+          else
+            ""
+        in
         Csv.output_record out [
           typ;
           class_; u.lastname; u.firstname;
           c.typ; c.lastname; c.firstname;
+          u.username;
           string_of_int (i + 1);
+          teacher;
           msg
         ]
       in
