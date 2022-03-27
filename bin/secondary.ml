@@ -27,7 +27,11 @@ let () = Lwt_main.run (
       status = "";
     } in
     l |> List.iter (fun u ->
-      let class_ = (List.find (fun g -> g.is_class) u.groups).code in
+      let class_ =
+        match List.filter (fun g -> g.is_class) u.groups with
+        | [] -> "?"
+        | g :: _ -> g.code
+      in
       let show typ i (c : Coaccount.t) msg =
         Csv.output_record out [
           typ;
