@@ -8,5 +8,5 @@
  (preprocess (pps lwt_ppx)))
 (executable
  (name secondary) (modules secondary)
- (libraries smartschool_soap str)
+ (libraries smartschool_soap str csv)
  (preprocess (pps lwt_ppx)))
