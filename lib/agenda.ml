@@ -1,5 +1,34 @@
 open Protocol_conv_xml
 
+module Params = struct
+  type param = string * string
+
+  let param_to_xml_light (name, value) =
+    let v = if value = "" then [] else [Xml.PCData value] in
+    Xml.Element ("param", ["name", name], v)
+
+  let param_of_xml_light_exn = function
+    | Xml.(Element ("param", ["name", name], [])) -> name, ""
+    | Xml.(Element ("param", ["name", name], [PCData value])) -> name, value
+    | _ -> failwith "Params.of_xml_light_exn"
+
+  type t = {
+    l: param list [@key "param"];
+  } [@@deriving protocol ~driver:(module Xml_light)]
+end
+
+module Request = struct
+  type command = {
+    subsystem: string;
+    action: string;
+    params: Params.t;
+  } [@@deriving protocol ~driver:(module Xml_light)]
+
+  type t = {
+    command: command;
+  } [@@deriving protocol ~driver:(module Xml_light)]
+end
+
 module Query = struct
   module Response = struct
     type lesson = {
@@ -51,55 +80,28 @@ module Query = struct
   end
 
   module Request = struct
-    module Params = struct
-      type param = string * string
-
-      let param_to_xml_light (name, value) =
-        let v = if value = "" then [] else [Xml.PCData value] in
-        Xml.Element ("param", ["name", name], v)
-
-      let param_of_xml_light_exn = function
-        | Xml.(Element ("param", ["name", name], [])) -> name, ""
-        | Xml.(Element ("param", ["name", name], [PCData value])) -> name, value
-        | _ -> failwith "Params.of_xml_light_exn"
-
-      type t = {
-        l: param list [@key "param"];
-      } [@@deriving protocol ~driver:(module Xml_light)]
-    end
-
-    type command = {
-      subsystem: string;
-      action: string;
-      params: Params.t;
-    } [@@deriving protocol ~driver:(module Xml_light)]
-
-    type t = {
-      command: command;
-    } [@@deriving protocol ~driver:(module Xml_light)]
-
     let make ?class_ start end_ =
       let ft, fi =
         match class_ with
         | None -> "false", ""
         | Some c -> "Class", string_of_int c
       in
-      {command = {
+      {Request.command = {
         subsystem = "agenda";
         action = "get lessons";
         params = {l = [
-            "startDateTimestamp", start;
-            "endDateTimestamp", end_;
-            "filterType", ft;
-            "filterID", fi;
-            "gridType", "2";
-            "classID", "0";
-            "endDateTimestampOld", "1655533390"; (* FIXME? *)
-            "forcedTeacher", "0";
-            "forcedClass", "0";
-            "forcedClassroom", "0";
-            "assignmentXml", "<assignments/>";
-            "assignmentTypeID", "1";
+          "startDateTimestamp", string_of_int start;
+          "endDateTimestamp", string_of_int end_;
+          "filterType", ft;
+          "filterID", fi;
+          "gridType", "2";
+          "classID", "0";
+          "endDateTimestampOld", "1655533390"; (* FIXME? *)
+          "forcedTeacher", "0";
+          "forcedClass", "0";
+          "forcedClassroom", "0";
+          "assignmentXml", "<assignments/>";
+          "assignmentTypeID", "1";
         ]}
       }}
   end
