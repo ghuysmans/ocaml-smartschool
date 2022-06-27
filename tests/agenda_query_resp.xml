@@ -1,0 +1,58 @@
+<server>
+   <response>
+      <status>ok</status>
+      <actions>
+         <action>
+            <subsystem>agenda</subsystem>
+            <command>handle lessons</command>
+            <data>
+               <content>
+                  <lessons>
+                     <lesson>
+                        <momentID>815450</momentID>
+                        <lessonID>757</lessonID>
+                        <hourID>22</hourID>
+                        <date>2022-05-04</date>
+                        <subject />
+                        <course>MULTIMEDIA</course>
+                        <courseTitle>MULTIMEDIA</courseTitle>
+                        <classroom>C 303</classroom>
+                        <classroomTitle>C 303</classroomTitle>
+                        <teacher>HUYSMANS Guillaume</teacher>
+                        <teacherTitle>Huysmans Guillaume (HUYSMANS Guillaume)</teacherTitle>
+                        <klassen>5TTI</klassen>
+                        <klassenTitle>5TTI</klassenTitle>
+                        <classIDs>198</classIDs>
+                        <bothStartStatus>0</bothStartStatus>
+                        <assignmentEndStatus>0</assignmentEndStatus>
+                        <testDeadlineStatus>0</testDeadlineStatus>
+                        <noteStatus>0</noteStatus>
+                        <note />
+                        <date_listview>mercredi  4 mai 2022</date_listview>
+                        <hour>1ère heure</hour>
+                        <activity>0</activity>
+                        <activityID />
+                        <color>kiwi</color>
+                        <hourValue>08:15 - 09:05</hourValue>
+                        <components_hidden>
+                           <hiddencomponent />
+                        </components_hidden>
+                        <freedayIcon>0</freedayIcon>
+                        <someSubjectsEmpty>1</someSubjectsEmpty>
+                     </lesson>
+                  </lessons>
+                  <title>
+                     <teacher>HUYSMANS Guillaume (Huysmans Guillaume)</teacher>
+                     <class />
+                     <classroom />
+                  </title>
+                  <freedays hideLessonInfo="1" />
+                  <freedeadlines />
+                  <freeNotes />
+                  <deadlineRestrictions />
+               </content>
+            </data>
+         </action>
+      </actions>
+   </response>
+</server>

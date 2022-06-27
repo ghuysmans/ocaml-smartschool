@@ -1,0 +1,20 @@
+<request>
+   <command>
+      <subsystem>agenda</subsystem>
+      <action>get lessons</action>
+      <params>
+         <param name="startDateTimestamp"><![CDATA[1654496590]]></param>
+         <param name="endDateTimestamp"><![CDATA[1654928590]]></param>
+         <param name="filterType"><![CDATA[false]]></param>
+         <param name="filterID" />
+         <param name="gridType"><![CDATA[2]]></param>
+         <param name="classID"><![CDATA[0]]></param>
+         <param name="endDateTimestampOld"><![CDATA[1655533390]]></param>
+         <param name="forcedTeacher"><![CDATA[0]]></param>
+         <param name="forcedClass"><![CDATA[0]]></param>
+         <param name="forcedClassroom"><![CDATA[0]]></param>
+         <param name="assignmentXml"><![CDATA[<assignments/>]]></param>
+         <param name="assignmentTypeID"><![CDATA[1]]></param>
+      </params>
+   </command>
+</request>
