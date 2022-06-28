@@ -27,6 +27,11 @@ module Request = struct
   type t = {
     command: command;
   } [@@deriving protocol ~driver:(module Xml_light)]
+
+  let to_xml_light t =
+    match to_xml_light t with
+    | Xml.Element (_, _, ch) -> Xml.Element ("request", [], ch)
+    | _ -> failwith "Request.to_xml_light"
 end
 
 module Assignment = struct
@@ -209,6 +214,11 @@ module Edit = struct
       assignments: Assignment.l;
       unique_ids: nil [@key "uniqueids"];
     } [@@deriving to_protocol ~driver:(module Xml_light)]
+
+    let to_xml_light t =
+      match to_xml_light t with
+      | Xml.Element (_, _, ch) -> Xml.Element ("xml", [], ch)
+      | _ -> failwith "Edit.Request.to_xml_light"
 
     let make ?class_ ?(assignments=[]) ~start ~end_ ~moment_id ~notes ~color ~lesson_id subject =
       let ft, fi =
