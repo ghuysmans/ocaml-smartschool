@@ -1,39 +1,5 @@
 open Protocol_conv_xml
 
-module Params = struct
-  type param = string * string
-
-  let param_to_xml_light (name, value) =
-    let v = if value = "" then [] else [Xml.PCData value] in
-    Xml.Element ("param", ["name", name], v)
-
-  let param_of_xml_light_exn = function
-    | Xml.(Element ("param", ["name", name], [])) -> name, ""
-    | Xml.(Element ("param", ["name", name], [PCData value])) -> name, value
-    | _ -> failwith "Params.of_xml_light_exn"
-
-  type t = {
-    l: param list [@key "param"];
-  } [@@deriving protocol ~driver:(module Xml_light)]
-end
-
-module Request = struct
-  type command = {
-    subsystem: string;
-    action: string;
-    params: Params.t;
-  } [@@deriving protocol ~driver:(module Xml_light)]
-
-  type t = {
-    command: command;
-  } [@@deriving protocol ~driver:(module Xml_light)]
-
-  let to_xml_light t =
-    match to_xml_light t with
-    | Xml.Element (_, _, ch) -> Xml.Element ("request", [], ch)
-    | _ -> failwith "Request.to_xml_light"
-end
-
 module Assignment = struct
   type end_moment = {
     class_id: int;
@@ -111,37 +77,8 @@ module Assignment = struct
       failwith "Assignment.l_of_xml_light_exn"
 end
 
-module Names = struct
-  type t = string list
-
-  let of_xml_light_exn = function
-    | Xml.Element (_, _, []) -> []
-    | Xml.(Element (_, _, [PCData l])) ->
-      String.split_on_char ',' l |>
-      List.map String.trim (* FIXME? *)
-    | _ -> failwith "Names.of_xml_light_exn"
-
-  let to_xml_light l =
-    Xml.(Element ("names", [], [PCData (String.concat "," l)]))
-end
-
-module Ids = struct
-  type t = int list
-
-  let of_xml_light_exn x =
-    try
-      Names.of_xml_light_exn x |>
-      List.map int_of_string
-    with Failure _ ->
-      failwith "Ids.of_xml_light_exn"
-
-  let to_xml_light l =
-    List.map string_of_int l |>
-    Names.to_xml_light
-end
-
 module Query = struct
-  module Response = struct
+  module Response_data = struct
     type lesson = {
       moments: Ids.t [@key "momentID"];
       lessons: Ids.t [@key "lessonID"];
@@ -169,26 +106,9 @@ module Query = struct
     type data = {
       content: content;
     } [@@deriving protocol ~driver:(module Xml_light)]
-
-    type action = {
-      subsystem: string;
-      command: string;
-      data: data;
-    } [@@deriving protocol ~driver:(module Xml_light)]
-
-    type actions = {
-      l: action list [@key "action"];
-    } [@@deriving protocol ~driver:(module Xml_light)]
-
-    type response = {
-      status: string;
-      actions: actions;
-    } [@@deriving protocol ~driver:(module Xml_light)]
-
-    type t = { (* server *)
-      response: response;
-    } [@@deriving protocol ~driver:(module Xml_light)]
   end
+
+  module Response = Private.Response (Response_data)
 
   module Request = struct
     let make ?class_ start end_ =
@@ -197,7 +117,7 @@ module Query = struct
         | None -> "false", ""
         | Some c -> "Class", string_of_int c
       in
-      {Request.command = {
+      {Private.Request.command = {
         subsystem = "agenda";
         action = "get lessons";
         params = {l = [
@@ -256,7 +176,7 @@ module Edit = struct
         | None -> "false", ""
         | Some c -> "Class", string_of_int c
       in
-      {Request.command = {
+      {Private.Request.command = {
         subsystem = "agenda";
         action = "save form";
         params = {l = [

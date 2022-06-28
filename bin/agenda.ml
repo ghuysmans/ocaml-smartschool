@@ -1,4 +1,5 @@
 open Smartschool.Agenda
+open Smartschool.Private
 
 let () =
   let get_dates d m =
@@ -29,7 +30,7 @@ let () =
   | [| _; "list" |] ->
     begin match Xml.parse_in stdin |> Query.Response.of_xml_light_exn with
     | {response = {actions = {l = [{data = {content = {lessons = {l}}}; _}]}; _}} ->
-      l |> List.iter (fun (x : Query.Response.lesson) ->
+      l |> List.iter (fun (x : Query.Response_data.lesson) ->
         let moments = String.concat "-" (List.map string_of_int x.moments) in
         let lessons = String.concat "-" (List.map string_of_int x.lessons) in
         let courses = String.concat ", " x.courses in
