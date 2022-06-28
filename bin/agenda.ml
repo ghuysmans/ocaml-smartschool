@@ -36,7 +36,10 @@ let () =
         let courses = String.concat ", " x.courses in
         let classrooms = String.concat ", " x.classrooms in
         let s = if x.assignment_end || x.test_deadline then "*" else "" in
-        Printf.printf "mid=%s lid=%s %s @ %s%s\n" moments lessons courses classrooms s
+        Printf.printf
+          "mid=%s lid=%s %s @ %s%s\n\t%s\n"
+          moments lessons courses classrooms s
+          x.subject
       )
     | _ ->
       failwith "meh"
