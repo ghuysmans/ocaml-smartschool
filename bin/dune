@@ -14,3 +14,7 @@
  (name agenda) (modules agenda)
  (libraries smartschool_soap)
  (preprocess (pps lwt_ppx)))
+(executable
+ (name postboxes) (modules postboxes)
+ (libraries smartschool_soap)
+ (preprocess (pps lwt_ppx)))

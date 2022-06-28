@@ -12,5 +12,6 @@ depends: [
   "glical"
   "ppx_protocol_conv_xml_light"
   "ppx_protocol_conv_json"
+  "uri"
 ]
 synopsis: "Smartschool client library for OCaml"
