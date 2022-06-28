@@ -75,6 +75,44 @@ module Assignment = struct
       )
     | _ ->
       failwith "Assignment.l_of_xml_light_exn"
+
+  (* subset of form; TODO create a Lesson module? *)
+  module Response_data = struct
+    type assignment_tab = {
+      l: l [@key "assignments"];
+    } [@@deriving of_protocol ~driver:(module Xml_light)]
+
+    type form = {
+      a: assignment_tab [@key "assignmenttab"];
+    } [@@deriving of_protocol ~driver:(module Xml_light)]
+
+    type data = {
+      form: form;
+    } [@@deriving of_protocol ~driver:(module Xml_light)]
+  end
+
+  module Response = Private.Response (Response_data)
+
+  module Request = struct
+    let make ?(class_ids=[0]) ~lesson_id moment_id =
+      {Private.Request.command = {
+        subsystem = "agenda";
+        action = "show form";
+        params = {l = [
+          "momentID", string_of_int moment_id;
+          "lessonID", string_of_int lesson_id;
+          "classIDs", String.concat "," (List.map string_of_int class_ids);
+          "filterType", "false";
+          "filterID", "false";
+          "dateID", "";
+          "assignmentIDs", "";
+          "activityID", "0";
+          "gridType", "2";
+          "tab_to_show", "0";
+          "show_assignment", "0";
+        ]}
+      }}
+  end
 end
 
 module Query = struct

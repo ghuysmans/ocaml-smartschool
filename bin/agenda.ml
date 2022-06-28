@@ -41,8 +41,28 @@ let () =
     | _ ->
       failwith "meh"
     end
+  | [| _; "querya"; mom; les |] ->
+    let moment_id = int_of_string mom in
+    let lesson_id = int_of_string les in
+    let xml =
+      Assignment.Request.make ~lesson_id moment_id |>
+      Request.to_xml_light |>
+      Xml.to_string
+    in
+    Uri.encoded_of_query ["command", [xml]] |> print_endline;
+  | [| _; "lista" |] ->
+    begin match Xml.parse_in stdin |> Assignment.Response.of_xml_light_exn with
+    | {response = {actions = {l = [{data = {form = {a = {l}}}; _}]}; _}} ->
+      l |> List.iter (fun (x : Assignment.t) ->
+        Printf.printf "id=%d %s (%s)\n"
+          x.assignment_id x.description x.assigned_date
+      )
+    | _ ->
+      failwith "meh"
+    end
   | _ ->
     Printf.eprintf
-      "usage: %s query d m | list | edit d m mid lid subject notes\n"
+      "usage:\t%s query d m | list | edit d m mid lid subject notes\n"
       Sys.argv.(0);
+    Printf.eprintf "\t%s querya mid lid | lista\n" Sys.argv.(0);
     exit 1
