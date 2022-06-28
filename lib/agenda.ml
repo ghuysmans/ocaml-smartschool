@@ -111,21 +111,50 @@ module Assignment = struct
       failwith "Assignment.l_of_xml_light_exn"
 end
 
+module Names = struct
+  type t = string list
+
+  let of_xml_light_exn = function
+    | Xml.Element (_, _, []) -> []
+    | Xml.(Element (_, _, [PCData l])) ->
+      String.split_on_char ',' l |>
+      List.map String.trim (* FIXME? *)
+    | _ -> failwith "Names.of_xml_light_exn"
+
+  let to_xml_light l =
+    Xml.(Element ("names", [], [PCData (String.concat "," l)]))
+end
+
+module Ids = struct
+  type t = int list
+
+  let of_xml_light_exn x =
+    try
+      Names.of_xml_light_exn x |>
+      List.map int_of_string
+    with Failure _ ->
+      failwith "Ids.of_xml_light_exn"
+
+  let to_xml_light l =
+    List.map string_of_int l |>
+    Names.to_xml_light
+end
+
 module Query = struct
   module Response = struct
     type lesson = {
-      moment_id: int [@key "momentID"];
-      lesson_id: int [@key "lessonID"];
+      moments: Ids.t [@key "momentID"];
+      lessons: Ids.t [@key "lessonID"];
       hour_id: int [@key "hourID"];
       hour_value: string [@key "hourValue"];
       hour: string;
       date: string;
       subject: string;
-      course: string;
-      classroom: string;
-      teacher: string;
-      class_: string [@key "klassen"];
-      class_ids: string [@key "classIDs"]; (* FIXME split? *)
+      courses: Names.t [@key "courseTitle"];
+      classrooms: Names.t [@key "classroomTitle"];
+      teachers: Names.t [@key "teacherTitle"];
+      classes_: Names.t [@key "klassen"];
+      class_ids: Ids.t [@key "classIDs"];
       color: string;
     } [@@deriving protocol ~driver:(module Xml_light)]
 
@@ -134,7 +163,7 @@ module Query = struct
     } [@@deriving protocol ~driver:(module Xml_light)]
 
     type content = {
-      l: lessons [@key "lessons"];
+      lessons: lessons;
     } [@@deriving protocol ~driver:(module Xml_light)]
 
     type data = {
