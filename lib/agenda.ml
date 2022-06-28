@@ -29,6 +29,83 @@ module Request = struct
   } [@@deriving protocol ~driver:(module Xml_light)]
 end
 
+module Assignment = struct
+  type end_moment = {
+    class_id: int;
+    moment_id: int;
+  }
+
+  type end_moments = end_moment list
+
+  let end_moments_to_xml_light l =
+    Xml.Element ("endmoments", [],
+      l |> List.map (fun {class_id; moment_id} ->
+        Xml.(Element (
+          "endmoment",
+          ["classid", string_of_int class_id; "method", "list"],
+          [PCData (string_of_int moment_id)]
+        ))
+      )
+    )
+
+  let end_moments_of_xml_light_exn = function
+    | Xml.Element ("endmoments", _, l) ->
+      l |> List.map (function
+        | Xml.Element ("endmoment", ("classid", c) :: _, [PCData m]) ->
+          {class_id = int_of_string c; moment_id = int_of_string m}
+        | _ ->
+          failwith "Assignment.end_moments_of_xml_light_exn"
+      )
+    | _ ->
+      failwith "Assignment.end_moments_of_xml_light_exn"
+
+  (* FIXME userid, selected attributes *)
+  type student = string [@@deriving protocol ~driver:(module Xml_light)]
+
+  type class_ = {
+    l: student list [@key "student"];
+  } [@@deriving protocol ~driver:(module Xml_light)]
+
+  type students = {
+    l: class_ list [@key "class"];
+  } [@@deriving protocol ~driver:(module Xml_light)]
+
+  type t = {
+    lesson_id: int [@key "lessonid"] [@default 0];
+    assignment_id: int [@key "assignmentid"];
+    start_moment: int [@key "startmoment"];
+    end_moments: end_moments [@key "endmoments"];
+    typ: int [@key "type"];
+    description: string;
+    status: int;
+    assigned_date: string [@key "assigneddate"];
+    students: students;
+  } [@@deriving protocol ~driver:(module Xml_light)]
+
+  type l = t list
+
+  let l_to_xml_light l =
+    Xml.Element ("assignments", [],
+      l |> List.map (fun x ->
+        match to_xml_light x with
+        | Xml.Element (_, _, ch) ->
+          Xml.Element ("assignment", ["lessonid", string_of_int x.lesson_id], ch)
+        | _ -> failwith "Assignment.l_to_xml_light"
+      )
+    )
+
+  let l_of_xml_light_exn = function
+    | Xml.Element ("assignments", _, l) ->
+      l |> List.map (function
+        | Xml.Element ("assignment", ["lessonid", i], ch) ->
+          let t = of_xml_light_exn (Xml.Element ("assignment", [], ch)) in
+          {t with lesson_id = int_of_string i}
+        | _ -> failwith "Assignment.l_of_xml_light_exn"
+      )
+    | _ ->
+      failwith "Assignment.l_of_xml_light_exn"
+end
+
 module Query = struct
   module Response = struct
     type lesson = {
@@ -122,59 +199,6 @@ module Edit = struct
       note: text;
     } [@@deriving to_protocol ~driver:(module Xml_light)]
 
-    type end_moment = {
-      class_id: int;
-      moment_id: int;
-    }
-
-    type end_moments = end_moment list
-
-    let end_moments_to_xml_light l =
-      Xml.Element ("endmoments", [],
-        l |> List.map (fun {class_id; moment_id} ->
-          Xml.(Element (
-            "endmoment",
-            ["classid", string_of_int class_id; "method", "list"],
-            [PCData (string_of_int moment_id)]
-          ))
-        )
-      )
-
-    (* FIXME userid, selected attributes *)
-    type student = string [@@deriving to_protocol ~driver:(module Xml_light)]
-
-    type class_ = {
-      l: student list [@key "student"];
-    } [@@deriving to_protocol ~driver:(module Xml_light)]
-
-    type students = {
-      l: class_ list [@key "class"];
-    } [@@deriving to_protocol ~driver:(module Xml_light)]
-
-    type assignment = {
-      lesson_id: int [@key "lessonid"] [@default 0];
-      assignment_id: int [@key "assignmentid"];
-      start_moment: int [@key "startmoment"];
-      end_moments: end_moments [@key "endmoments"];
-      typ: int [@key "type"];
-      description: string;
-      status: int;
-      assigned_date: string [@key "assigneddate"];
-      students: students;
-    } [@@deriving to_protocol ~driver:(module Xml_light)]
-
-    type assignments = assignment list
-
-    let assignments_to_xml_light l =
-      Xml.Element ("assignments", [],
-        l |> List.map (fun x ->
-          match assignment_to_xml_light x with
-          | Xml.Element (_, _, ch) ->
-            Xml.Element ("assignment", ["lessonid", string_of_int x.lesson_id], ch)
-          | _ -> failwith "assignments_to_xml_light"
-        )
-      )
-
     (* FIXME *)
     type nil = string [@@deriving to_protocol ~driver:(module Xml_light)]
 
@@ -182,7 +206,7 @@ module Edit = struct
       moment_id: int [@key "momentid"];
       subjects: subjects;
       notes: notes;
-      assignments: assignments;
+      assignments: Assignment.l;
       unique_ids: nil [@key "uniqueids"];
     } [@@deriving to_protocol ~driver:(module Xml_light)]
 
