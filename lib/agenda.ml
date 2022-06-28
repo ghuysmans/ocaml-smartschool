@@ -106,3 +106,134 @@ module Query = struct
       }}
   end
 end
+
+module Edit = struct
+  module Request = struct
+    type text = {
+      text: string;
+      moment_id: int [@key "momentid"];
+    } [@@deriving to_protocol ~driver:(module Xml_light)]
+
+    type subjects = {
+      subject: text;
+    } [@@deriving to_protocol ~driver:(module Xml_light)]
+
+    type notes = {
+      note: text;
+    } [@@deriving to_protocol ~driver:(module Xml_light)]
+
+    type end_moment = {
+      class_id: int;
+      moment_id: int;
+    }
+
+    type end_moments = end_moment list
+
+    let end_moments_to_xml_light l =
+      Xml.Element ("endmoments", [],
+        l |> List.map (fun {class_id; moment_id} ->
+          Xml.(Element (
+            "endmoment",
+            ["classid", string_of_int class_id; "method", "list"],
+            [PCData (string_of_int moment_id)]
+          ))
+        )
+      )
+
+    (* FIXME userid, selected attributes *)
+    type student = string [@@deriving to_protocol ~driver:(module Xml_light)]
+
+    type class_ = {
+      l: student list [@key "student"];
+    } [@@deriving to_protocol ~driver:(module Xml_light)]
+
+    type students = {
+      l: class_ list [@key "class"];
+    } [@@deriving to_protocol ~driver:(module Xml_light)]
+
+    type assignment = {
+      lesson_id: int [@key "lessonid"] [@default 0];
+      assignment_id: int [@key "assignmentid"];
+      start_moment: int [@key "startmoment"];
+      end_moments: end_moments [@key "endmoments"];
+      typ: int [@key "type"];
+      description: string;
+      status: int;
+      assigned_date: string [@key "assigneddate"];
+      students: students;
+    } [@@deriving to_protocol ~driver:(module Xml_light)]
+
+    type assignments = assignment list
+
+    let assignments_to_xml_light l =
+      Xml.Element ("assignments", [],
+        l |> List.map (fun x ->
+          match assignment_to_xml_light x with
+          | Xml.Element (_, _, ch) ->
+            Xml.Element ("assignment", ["lessonid", string_of_int x.lesson_id], ch)
+          | _ -> failwith "assignments_to_xml_light"
+        )
+      )
+
+    (* FIXME *)
+    type nil = string [@@deriving to_protocol ~driver:(module Xml_light)]
+
+    type t = {
+      moment_id: int [@key "momentid"];
+      subjects: subjects;
+      notes: notes;
+      assignments: assignments;
+      unique_ids: nil [@key "uniqueids"];
+    } [@@deriving to_protocol ~driver:(module Xml_light)]
+
+    let make ?class_ ?(assignments=[]) ~start ~end_ ~moment_id ~notes ~color ~lesson_id subject =
+      let ft, fi =
+        (* FIXME don't duplicate *)
+        match class_ with
+        | None -> "false", ""
+        | Some c -> "Class", string_of_int c
+      in
+      {Request.command = {
+        subsystem = "agenda";
+        action = "save form";
+        params = {l = [
+          "startDateTimestamp", string_of_int start;
+          "endDateTimestamp", string_of_int end_;
+          "xmlString", Xml.to_string @@ to_xml_light @@ {
+            moment_id;
+            subjects = {
+              subject = {
+                text = subject;
+                moment_id;
+              }
+            };
+            notes = {
+              note = {
+                text = notes;
+                moment_id;
+              }
+            };
+            assignments;
+            unique_ids = "";
+          };
+          "gridType", "2";
+          "filterType", ft;
+          "filterID", fi;
+          "filterMemory", "0";
+          "copySubject", "0";
+          "copySubjectType", "hour";
+          "copyMaterial", "0";
+          "copyMaterialType", "hour";
+          "copyReservations", "0";
+          "copyReservationsType", "hour";
+          "copyNote", "0";
+          "copyNoteType", "hour";
+          "copyYp", "0";
+          "copyYpType", "hour";
+          "color", color;
+          "componentsHidden", "";
+          "lessonID", string_of_int lesson_id;
+        ]}
+      }}
+  end
+end
