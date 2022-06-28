@@ -71,7 +71,7 @@ module Assignment = struct
   } [@@deriving protocol ~driver:(module Xml_light)]
 
   type t = {
-    lesson_id: int [@key "lessonid"] [@default 0];
+    lesson_id: string [@key "lessonid"]; (* FIXME *)
     assignment_id: int [@key "assignmentid"];
     start_moment: int [@key "startmoment"];
     end_moments: end_moments [@key "endmoments"];
@@ -89,7 +89,7 @@ module Assignment = struct
       l |> List.map (fun x ->
         match to_xml_light x with
         | Xml.Element (_, _, ch) ->
-          Xml.Element ("assignment", ["lessonid", string_of_int x.lesson_id], ch)
+          Xml.Element ("assignment", ["lessonid", x.lesson_id], ch)
         | _ -> failwith "Assignment.l_to_xml_light"
       )
     )
@@ -97,9 +97,9 @@ module Assignment = struct
   let l_of_xml_light_exn = function
     | Xml.Element ("assignments", _, l) ->
       l |> List.map (function
-        | Xml.Element ("assignment", ["lessonid", i], ch) ->
+        | Xml.Element ("assignment", ["lessonid", lesson_id], ch) ->
           let t = of_xml_light_exn (Xml.Element ("assignment", [], ch)) in
-          {t with lesson_id = int_of_string i}
+          {t with lesson_id}
         | _ -> failwith "Assignment.l_of_xml_light_exn"
       )
     | _ ->
