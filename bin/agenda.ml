@@ -35,7 +35,8 @@ let () =
         let lessons = String.concat "-" (List.map string_of_int x.lessons) in
         let courses = String.concat ", " x.courses in
         let classrooms = String.concat ", " x.classrooms in
-        Printf.printf "mid=%s lid=%s %s @ %s\n" moments lessons courses classrooms
+        let s = if x.assignment_end || x.test_deadline then "*" else "" in
+        Printf.printf "mid=%s lid=%s %s @ %s%s\n" moments lessons courses classrooms s
       )
     | _ ->
       failwith "meh"

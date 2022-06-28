@@ -93,6 +93,8 @@ module Query = struct
       classes_: Names.t [@key "klassen"];
       class_ids: Ids.t [@key "classIDs"];
       color: string;
+      assignment_end: Binary.t [@key "assignmentEndStatus"];
+      test_deadline: Binary.t [@key "testDeadlineStatus"];
     } [@@deriving protocol ~driver:(module Xml_light)]
 
     type lessons = {
