@@ -26,12 +26,7 @@ module Agenda = struct
 
   let call {base; cookie; user_agent; ctx} xml =
     let uri = Uri.with_query' base ["module", "Agenda"; "file", "dispatcher"] in
-    let body =
-      Uri.encoded_of_query ["command", [
-        Xml.to_string (Api.Request.to_xml_light xml)
-      ]] |>
-      Cohttp_lwt.Body.of_string
-    in
+    let params = ["command", [Xml.to_string (Api.Request.to_xml_light xml)]] in
     let headers =
       let origin = Uri.with_path base "/" |> Uri.to_string in
       Cohttp.Header.of_list [
@@ -43,7 +38,7 @@ module Agenda = struct
         "x-requested-with", "XMLHttpRequest";
       ]
     in
-    Cohttp_lwt_unix.Client.post ~ctx ~body ~headers uri >>= fun (resp, body) ->
+    Cohttp_lwt_unix.Client.post_form ~ctx ~headers ~params uri >>= fun (resp, body) ->
     if Cohttp.Response.status resp = `OK then
       Cohttp_lwt.Body.to_string body >|= Xml.parse_string
     else
