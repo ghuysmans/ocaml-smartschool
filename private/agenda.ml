@@ -155,7 +155,7 @@ module Query = struct
     let make ?class_ start end_ =
       let ft, fi =
         match class_ with
-        | None -> "false", ""
+        | None -> "false", "false"
         | Some c -> "Class", string_of_int c
       in
       {Api.Request.command = {
@@ -172,7 +172,6 @@ module Query = struct
           "forcedTeacher", "0";
           "forcedClass", "0";
           "forcedClassroom", "0";
-          "assignmentXml", "<assignments/>";
           "assignmentTypeID", "1";
         ]}
       }}
@@ -216,7 +215,7 @@ module Edit = struct
       let ft, fi =
         (* FIXME don't duplicate *)
         match class_ with
-        | None -> "false", ""
+        | None -> "false", "false"
         | Some c -> "Class", string_of_int c
       in
       {Api.Request.command = {
