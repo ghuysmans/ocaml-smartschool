@@ -1,4 +1,4 @@
 (library
- (name smartschool_soap)
+ (public_name smartschool_soap)
  (libraries cohttp-lwt-unix xml-light base64 smartschool)
  (preprocess (pps ppx_deriving_yojson lwt_ppx)))

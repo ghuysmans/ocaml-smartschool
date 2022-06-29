@@ -1,10 +1,10 @@
-open Smartschool.Agenda
-open Smartschool.Private
+open Smartschool_private.Agenda
+open Smartschool_private.Api
 
 let () =
   let get_dates d m =
     let d, m = int_of_string d, int_of_string m in
-    let start = Smartschool_soap.timestamp ~y:2022 ~m ~d in
+    let start = timestamp ~y:2022 ~m ~d in
     start, start + 60 * 60 * 24 * 5
   in
   match Sys.argv with

@@ -103,12 +103,3 @@ let get_all_users ~access_code ~recursive code =
     Smartschool.Users.of_json
   else
     Lwt.fail_with "getAllAccountsExtended"
-
-let timestamp ~y ~m ~d =
-  let open Unix in
-  let tm = {
-    tm_sec = 0; tm_min = 0; tm_hour = 7;
-    tm_mday = d; tm_mon = m - 1; tm_year = y - 1900;
-    tm_wday = 0; tm_yday = 0; tm_isdst = false;
-  } in
-  int_of_float (fst (mktime tm))

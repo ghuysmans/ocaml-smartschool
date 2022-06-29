@@ -37,12 +37,12 @@ module Query = struct
     } [@@deriving of_protocol ~driver:(module Xml_light)]
   end
 
-  module Response = Private.Response (Response_data)
+  module Response = Api.Response (Response_data)
 
   module Request = struct
     (* FIXME continue?! *)
     let make box_type =
-      {Private.Request.command = {
+      {Api.Request.command = {
         subsystem = "postboxes";
         action = "message list";
         params = {l = [
@@ -88,11 +88,11 @@ module Fetch_message = struct
     } [@@deriving of_protocol ~driver:(module Xml_light)]
   end
 
-  module Response = Private.Response (Response_data)
+  module Response = Api.Response (Response_data)
 
   module Request = struct
     let make box_type id =
-      {Private.Request.command = {
+      {Api.Request.command = {
         subsystem = "postboxes";
         action = "show message";
         params = {l = [
@@ -124,11 +124,11 @@ module Query_attachments = struct
     } [@@deriving of_protocol ~driver:(module Xml_light)]
   end
 
-  module Response = Private.Response (Response_data)
+  module Response = Api.Response (Response_data)
 
   module Request = struct
     let make box_type id =
-      {Private.Request.command = {
+      {Api.Request.command = {
         subsystem = "postboxes";
         action = "attachment list";
         params = {l = [

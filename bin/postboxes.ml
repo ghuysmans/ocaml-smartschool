@@ -1,5 +1,5 @@
-open Smartschool.Postboxes
-open Smartschool.Private
+open Smartschool_private.Postboxes
+open Smartschool_private.Api
 
 let () =
   match Sys.argv with

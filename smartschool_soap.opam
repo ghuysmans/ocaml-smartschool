@@ -14,5 +14,6 @@ depends: [
   "base64" {>= "3.1.0"}
   "ppx_deriving_yojson"
   "lwt_ppx"
+  "smartschool"
 ]
 synopsis: "Smartschool client library for OCaml - SOAP client"

@@ -12,9 +12,9 @@
  (preprocess (pps lwt_ppx)))
 (executable
  (name agenda) (modules agenda)
- (libraries smartschool_soap)
+ (libraries smartschool_private)
  (preprocess (pps lwt_ppx)))
 (executable
  (name postboxes) (modules postboxes)
- (libraries smartschool_soap)
+ (libraries smartschool_private)
  (preprocess (pps lwt_ppx)))

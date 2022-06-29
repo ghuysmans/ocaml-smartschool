@@ -91,11 +91,11 @@ module Assignment = struct
     } [@@deriving of_protocol ~driver:(module Xml_light)]
   end
 
-  module Response = Private.Response (Response_data)
+  module Response = Api.Response (Response_data)
 
   module Request = struct
     let make ?(class_ids=[0]) ~lesson_id moment_id =
-      {Private.Request.command = {
+      {Api.Request.command = {
         subsystem = "agenda";
         action = "show form";
         params = {l = [
@@ -148,7 +148,7 @@ module Query = struct
     } [@@deriving protocol ~driver:(module Xml_light)]
   end
 
-  module Response = Private.Response (Response_data)
+  module Response = Api.Response (Response_data)
 
   module Request = struct
     let make ?class_ start end_ =
@@ -157,7 +157,7 @@ module Query = struct
         | None -> "false", ""
         | Some c -> "Class", string_of_int c
       in
-      {Private.Request.command = {
+      {Api.Request.command = {
         subsystem = "agenda";
         action = "get lessons";
         params = {l = [
@@ -216,7 +216,7 @@ module Edit = struct
         | None -> "false", ""
         | Some c -> "Class", string_of_int c
       in
-      {Private.Request.command = {
+      {Api.Request.command = {
         subsystem = "agenda";
         action = "save form";
         params = {l = [
