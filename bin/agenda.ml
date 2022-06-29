@@ -8,6 +8,10 @@ let () = Lwt_main.run (
     start, start + 60 * 60 * 24 * 5
   in
   match Sys.argv with
+  | [| _; "test"; uri |] ->
+    let%lwt () = Lwt_io.printl "get..." in
+    let%lwt _ = Cohttp_lwt_unix.Client.get (Uri.of_string uri) in
+    Lwt_io.printl "done"
   | [| _; "query"; d; m; y |] ->
     let start, end_ = get_dates d m y in
     let ctx = get_ctx () in
