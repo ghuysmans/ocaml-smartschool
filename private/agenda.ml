@@ -133,6 +133,7 @@ module Query = struct
       color: string;
       assignment_end: Binary.t [@key "assignmentEndStatus"];
       test_deadline: Binary.t [@key "testDeadlineStatus"];
+      note: string;
     } [@@deriving protocol ~driver:(module Xml_light)]
 
     type lessons = {
@@ -209,7 +210,7 @@ module Edit = struct
       | Xml.Element (_, _, ch) -> Xml.Element ("xml", [], ch)
       | _ -> failwith "Edit.Request.to_xml_light"
 
-    let make ?class_ ?(assignments=[]) ~start ~end_ ~moment_id ~notes ~color ~lesson_id subject =
+    let make ?class_ ?(assignments=[]) ~start ~end_ ~moment_id ~note ~color ~lesson_id subject =
       let ft, fi =
         (* FIXME don't duplicate *)
         match class_ with
@@ -232,7 +233,7 @@ module Edit = struct
             };
             notes = {
               note = {
-                text = notes;
+                text = note;
                 moment_id;
               }
             };
