@@ -180,6 +180,8 @@ module Query = struct
 end
 
 module Edit = struct
+  module Response = Api.Response (Whatever)
+
   module Request = struct
     type text = {
       text: string;
