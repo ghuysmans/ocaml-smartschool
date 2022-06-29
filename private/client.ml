@@ -1,12 +1,13 @@
 type context = {
-  host: string;
+  base: Uri.t;
   cookie: string;
   user_agent: string;
   ctx: Cohttp_lwt_unix.Client.ctx;
 }
 
 let hijack ~host ~cookie ~user_agent =
-  {host; cookie; user_agent; ctx = Cohttp_lwt_unix.Net.init ()}
+  let base = Uri.make ~scheme:"https" ~host ~path:"/index.php" () in
+  {base; cookie; user_agent; ctx = Cohttp_lwt_unix.Net.init ()}
 
 open Lwt.Infix
 
@@ -23,14 +24,8 @@ module Agenda = struct
     } in
     int_of_float (fst (mktime tm))
 
-  let call {host; cookie; user_agent; ctx} xml =
-    let uri =
-      Uri.make
-        ~scheme:"https" ~host
-        ~path:"/index.php"
-        ~query:["module", ["Agenda"]; "file", ["dispatcher"]]
-        ()
-    in
+  let call {base; cookie; user_agent; ctx} xml =
+    let uri = Uri.with_query' base ["module", "Agenda"; "file", "dispatcher"] in
     let body =
       Uri.encoded_of_query ["command", [
         Xml.to_string (Api.Request.to_xml_light xml)
@@ -38,7 +33,7 @@ module Agenda = struct
       Cohttp_lwt.Body.of_string
     in
     let headers =
-      let origin = Uri.make ~scheme:"https" ~host () |> Uri.to_string in
+      let origin = Uri.with_path base "/" |> Uri.to_string in
       Cohttp.Header.of_list [
         "content-type", "application/x-www-form-urlencoded; charset=UTF-8";
         "cookie", cookie;
