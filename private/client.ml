@@ -5,8 +5,16 @@ type context = {
   ctx: Cohttp_lwt_unix.Client.ctx;
 }
 
-let hijack ~host ~cookie ~user_agent =
+let hijack ~host ~user_agent =
   let base = Uri.make ~scheme:"https" ~host ~path:"/index.php" () in
+  let cookie =
+    match Sys.getenv_opt "SMSC_COOKIE" with
+    | None ->
+      prerr_endline "I need your cookie to continue.";
+      prerr_endline "Store it in the SMSC_COOKIE envvar or paste it below:";
+      read_line ()
+    | Some c -> c
+  in
   {base; cookie; user_agent; ctx = Cohttp_lwt_unix.Net.init ()}
 
 open Lwt.Infix

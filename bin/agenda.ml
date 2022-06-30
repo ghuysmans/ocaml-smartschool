@@ -1,7 +1,7 @@
 open Smartschool_private.Client
 
 let () = Lwt_main.run (
-  let get_ctx () = Net_config.(hijack ~host ~cookie ~user_agent) in
+  let get_ctx () = Net_config.(hijack ~host ~user_agent) in
   let get_dates d m y =
     let d, m, y = int_of_string d, int_of_string m, int_of_string y in
     let start = Agenda.timestamp ~y ~m ~d in

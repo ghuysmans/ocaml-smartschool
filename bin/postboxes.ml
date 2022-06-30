@@ -1,7 +1,7 @@
 open Smartschool_private.Client
 
 let () = Lwt_main.run (
-  let get_ctx () = Net_config.(hijack ~host ~cookie ~user_agent) in
+  let get_ctx () = Net_config.(hijack ~host ~user_agent) in
   match Sys.argv with
   | [| _; "query"; box_type |] ->
     let ctx = get_ctx () in
