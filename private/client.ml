@@ -45,6 +45,7 @@ module Agenda = struct
 
   type lesson = Query.Response_data.lesson
   type assignment = Assignment.t
+  type nonrec filter = filter
 
   let timestamp ~y ~m ~d =
     let open Unix in
@@ -57,8 +58,8 @@ module Agenda = struct
 
   let call = call "Agenda"
 
-  let lessons ctx ?class_ start end_ =
-    call ctx (Query.Request.make ?class_ start end_) >|=
+  let lessons ctx ?filter start end_ =
+    call ctx (Query.Request.make ?filter start end_) >|=
     Query.Response.of_xml_light_exn >>= function
       | {response = {actions = {l = [{data = {content = {lessons = {l}}}; _}]}; _}} ->
         Lwt.return l
@@ -71,8 +72,8 @@ module Agenda = struct
         Lwt.return l
       | _ -> Lwt.fail_with "Agenda.assignments"
 
-  let lessons_with_assignments ctx ?class_ start end_ =
-    lessons ctx ?class_ start end_ >>=
+  let lessons_with_assignments ctx ?filter start end_ =
+    lessons ctx ?filter start end_ >>=
     Lwt_list.map_s (fun (l : lesson) ->
       (* FIXME this is inefficient *)
       if l.test_deadline || l.assignment_end then
@@ -127,8 +128,8 @@ module Agenda = struct
     | x -> Lwt.fail_with @@ Cohttp.Code.string_of_status x
 
   module Print = struct
-    let teacher_list ?fn ctx ~start ~end_ ~subject ~room ~start_moment ~note ~daily ~color ~empty =
-      call ctx (Print.Teacher_list.Request.make ~start ~end_ ~subject ~room ~start_moment ~note ~daily ~color ~empty) >|=
+    let teacher_list ?teacher ?fn ctx ~start ~end_ ~subject ~room ~start_moment ~note ~daily ~color ~empty =
+      call ctx (Print.Teacher_list.Request.make ~start ~end_ ~subject ~room ~start_moment ~note ~daily ~color ~empty teacher) >|=
       Stream_file.Notification.of_xml_light_exn >>= function
         | {response = {actions = {l = [{data = {content}; _}]}; _}} ->
           stream ctx ?fn content

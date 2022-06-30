@@ -7,6 +7,21 @@ let () = Lwt_main.run (
     let start = Agenda.timestamp ~y ~m ~d in
     start, start + 60 * 60 * 24 * 5
   in
+  let print ?teacher d m y =
+    let start, end_ = get_dates d m y in
+    let ctx = get_ctx () in
+    let%lwt fn =
+      Agenda.Print.teacher_list
+        ?teacher
+        ctx
+        ~start ~end_
+        ~subject:true ~note:true
+        ~room:false ~start_moment:true
+        ~daily:false ~empty:false
+        ~color:true
+    in
+    Lwt_io.printl fn
+  in
   match Sys.argv with
   | [| _; "test"; uri |] ->
     let%lwt () = Lwt_io.printl "get..." in
@@ -45,19 +60,8 @@ let () = Lwt_main.run (
       else
         Lwt.return ()
     )
-  | [| _; "print"; d; m; y |] ->
-    let start, end_ = get_dates d m y in
-    let ctx = get_ctx () in
-    let%lwt fn =
-      Agenda.Print.teacher_list
-        ctx
-        ~start ~end_
-        ~subject:true ~note:true
-        ~room:false ~start_moment:true
-        ~daily:false ~empty:false
-        ~color:true
-    in
-    Lwt_io.printl fn
+  | [| _; "print"; d; m; y |] -> print d m y
+  | [| _; "print"; d; m; y; t |] -> print ~teacher:(int_of_string t) d m y
   | _ ->
     Printf.eprintf
       "usage:\t%s (query|print) d m y | edit d m y mid lid subject note\n"

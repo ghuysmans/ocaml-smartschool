@@ -115,6 +115,19 @@ module Assignment = struct
   end
 end
 
+type filter =
+  | Class of int
+  | Teacher of int
+
+let params_of_filter x =
+  let ft, fi =
+    match x with
+    | None -> "false", "false"
+    | Some (Class c) -> "Class", string_of_int c
+    | Some (Teacher t) -> "Teacher", string_of_int t
+  in
+  ["filterType", ft; "filterID", fi]
+
 module Query = struct
   module Response_data = struct
     type lesson = {
@@ -152,20 +165,13 @@ module Query = struct
   module Response = Api.Response (Response_data)
 
   module Request = struct
-    let make ?class_ start end_ =
-      let ft, fi =
-        match class_ with
-        | None -> "false", "false"
-        | Some c -> "Class", string_of_int c
-      in
+    let make ?filter start end_ =
       {Api.Request.command = {
         subsystem = "agenda";
         action = "get lessons";
         params = {l = [
           "startDateTimestamp", string_of_int start;
           "endDateTimestamp", string_of_int end_;
-          "filterType", ft;
-          "filterID", fi;
           "gridType", "2";
           "classID", "0";
           "endDateTimestampOld", "1655533390"; (* FIXME? *)
@@ -173,7 +179,7 @@ module Query = struct
           "forcedClass", "0";
           "forcedClassroom", "0";
           "assignmentTypeID", "1";
-        ]}
+        ] @ params_of_filter filter}
       }}
   end
 end
@@ -211,13 +217,7 @@ module Edit = struct
       | Xml.Element (_, _, ch) -> Xml.Element ("xml", [], ch)
       | _ -> failwith "Edit.Request.to_xml_light"
 
-    let make ?class_ ?(assignments=[]) ~start ~end_ ~moment_id ~note ~color ~lesson_id subject =
-      let ft, fi =
-        (* FIXME don't duplicate *)
-        match class_ with
-        | None -> "false", "false"
-        | Some c -> "Class", string_of_int c
-      in
+    let make ?filter ?(assignments=[]) ~start ~end_ ~moment_id ~note ~color ~lesson_id subject =
       {Api.Request.command = {
         subsystem = "agenda";
         action = "save form";
@@ -242,8 +242,6 @@ module Edit = struct
             unique_ids = "";
           };
           "gridType", "2";
-          "filterType", ft;
-          "filterID", fi;
           "filterMemory", "0";
           "copySubject", "0";
           "copySubjectType", "hour";
@@ -258,7 +256,7 @@ module Edit = struct
           "color", color;
           "componentsHidden", "";
           "lessonID", string_of_int lesson_id;
-        ]}
+        ] @ params_of_filter filter}
       }}
   end
 end
@@ -300,7 +298,7 @@ module Print = struct
         | Xml.Element (_, _, ch) -> Xml.Element ("xml", [], ch)
         | _ -> failwith "Print.Teacher_list.Request.to_xml_light"
 
-      let make ~start ~end_ ~subject ~room ~start_moment ~note ~daily ~color ~empty =
+      let make ~start ~end_ ~subject ~room ~start_moment ~note ~daily ~color ~empty teacher =
         let b x = if x then "1" else "0" in
         {Api.Request.command = {
           subsystem = "print";
@@ -318,9 +316,7 @@ module Print = struct
             "showDaynewpage", b daily;
             "showColor", b color;
             "showEmpty", b empty;
-            "filterType", "false";
-            "filterID", "false";
-          ]}
+          ] @ params_of_filter (Option.map (fun x -> Teacher x) teacher)}
         }}
     end
   end
