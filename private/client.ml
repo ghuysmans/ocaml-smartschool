@@ -11,6 +11,26 @@ let hijack ~host ~cookie ~user_agent =
 
 open Lwt.Infix
 
+let call mod_ {base; cookie; user_agent; ctx} xml =
+  let uri = Uri.with_query' base ["module", mod_; "file", "dispatcher"] in
+  let params = ["command", [Xml.to_string (Api.Request.to_xml_light xml)]] in
+  let headers =
+    let origin = Uri.with_path base "/" |> Uri.to_string in
+    Cohttp.Header.of_list [
+      "content-type", "application/x-www-form-urlencoded; charset=UTF-8";
+      "cookie", cookie;
+      "origin", origin;
+      "referer", origin;
+      "user-agent", user_agent;
+      "x-requested-with", "XMLHttpRequest";
+    ]
+  in
+  Cohttp_lwt_unix.Client.post_form ~ctx ~headers ~params uri >>= fun (resp, body) ->
+  if Cohttp.Response.status resp = `OK then
+    Cohttp_lwt.Body.to_string body >|= Xml.parse_string
+  else
+    Lwt.fail_with "Client.call"
+
 module Agenda = struct
   type lesson = Agenda.Query.Response_data.lesson
   type assignment = Agenda.Assignment.t
@@ -24,25 +44,7 @@ module Agenda = struct
     } in
     int_of_float (fst (mktime tm))
 
-  let call {base; cookie; user_agent; ctx} xml =
-    let uri = Uri.with_query' base ["module", "Agenda"; "file", "dispatcher"] in
-    let params = ["command", [Xml.to_string (Api.Request.to_xml_light xml)]] in
-    let headers =
-      let origin = Uri.with_path base "/" |> Uri.to_string in
-      Cohttp.Header.of_list [
-        "content-type", "application/x-www-form-urlencoded; charset=UTF-8";
-        "cookie", cookie;
-        "origin", origin;
-        "referer", origin;
-        "user-agent", user_agent;
-        "x-requested-with", "XMLHttpRequest";
-      ]
-    in
-    Cohttp_lwt_unix.Client.post_form ~ctx ~headers ~params uri >>= fun (resp, body) ->
-    if Cohttp.Response.status resp = `OK then
-      Cohttp_lwt.Body.to_string body >|= Xml.parse_string
-    else
-      Lwt.fail_with "Agenda.call"
+  let call = call "Agenda"
 
   open Agenda
 
