@@ -262,3 +262,66 @@ module Edit = struct
       }}
   end
 end
+
+module Stream_file = struct
+  module Notification_data = struct
+    type content = {
+      random: string;
+      title: string;
+      filesize: int;
+      extension: string;
+    } [@@deriving of_protocol ~driver:(module Xml_light)]
+
+    type data = {
+      content: content;
+    } [@@deriving of_protocol ~driver:(module Xml_light)]
+  end
+
+  module Notification = Api.Response (Notification_data)
+end
+
+module Print = struct
+  module Teacher_list = struct
+    module Request = struct
+      (* FIXME *)
+      type assignment_type = int [@@deriving to_protocol ~driver:(module Xml_light)]
+      let all_assignment_types = [1; 5; 6; 8; 10; 12]
+
+      type items = {
+        l: assignment_type list [@key "item"];
+      } [@@deriving to_protocol ~driver:(module Xml_light)]
+
+      type t = {
+        items: items;
+      } [@@deriving to_protocol ~driver:(module Xml_light)]
+
+      let to_xml_light t =
+        match to_xml_light t with
+        | Xml.Element (_, _, ch) -> Xml.Element ("xml", [], ch)
+        | _ -> failwith "Print.Teacher_list.Request.to_xml_light"
+
+      let make ~start ~end_ ~subject ~room ~start_moment ~note ~daily ~color ~empty =
+        let b x = if x then "1" else "0" in
+        {Api.Request.command = {
+          subsystem = "print";
+          action = "get teacher list pdf";
+          params = {l = [
+            "startDateTimestamp", string_of_int start;
+            "endDateTimestamp", string_of_int end_;
+            "assignmentTypesXml", Xml.to_string @@ to_xml_light @@ {
+              items = {l = all_assignment_types}
+            };
+            "showSubject", b subject;
+            "showClassroom", b room;
+            "showStartMoments", b start_moment;
+            "showNote", b note;
+            "showDaynewpage", b daily;
+            "showColor", b color;
+            "showEmpty", b empty;
+            "filterType", "false";
+            "filterID", "false";
+          ]}
+        }}
+    end
+  end
+end

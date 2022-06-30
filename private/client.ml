@@ -101,6 +101,39 @@ module Agenda = struct
       | {response = {status = "ok"; _}} ->
         Lwt.return ()
       | _ -> Lwt.fail_with "Agenda.edit"
+
+  let stream ({base; ctx; _} as c) ?fn (n : Stream_file.Notification_data.content) =
+    let uri =
+      Uri.add_query_params' base [
+        "module", "Agenda";
+        "file", "stream";
+        "function", "streamFile";
+        "extension", n.extension;
+        "random", n.random;
+        "title", n.title;
+        "filesize", string_of_int n.filesize;
+      ]
+    in
+    let headers = headers c in
+    Cohttp_lwt_unix.Client.get ~ctx ~headers uri >>= fun (resp, body) ->
+    match Cohttp.Response.status resp with
+    | `OK ->
+      let fn = Option.value ~default:n.title fn in
+      Lwt_io.(open_file ~mode:Output fn) >>= fun out ->
+      Cohttp_lwt.Body.write_body (Lwt_io.write out) body >>= fun () ->
+      Lwt_io.close out >>= fun () ->
+      Lwt.return fn
+    | `Unauthorized -> Lwt.fail_with "session expired"
+    | x -> Lwt.fail_with @@ Cohttp.Code.string_of_status x
+
+  module Print = struct
+    let teacher_list ?fn ctx ~start ~end_ ~subject ~room ~start_moment ~note ~daily ~color ~empty =
+      call ctx (Print.Teacher_list.Request.make ~start ~end_ ~subject ~room ~start_moment ~note ~daily ~color ~empty) >|=
+      Stream_file.Notification.of_xml_light_exn >>= function
+        | {response = {actions = {l = [{data = {content}; _}]}; _}} ->
+          stream ctx ?fn content
+        | _ -> Lwt.fail_with "Agenda.Print.teacher_list"
+  end
 end
 
 module Postboxes = struct

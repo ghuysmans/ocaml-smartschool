@@ -45,9 +45,22 @@ let () = Lwt_main.run (
       else
         Lwt.return ()
     )
+  | [| _; "print"; d; m; y |] ->
+    let start, end_ = get_dates d m y in
+    let ctx = get_ctx () in
+    let%lwt fn =
+      Agenda.Print.teacher_list
+        ctx
+        ~start ~end_
+        ~subject:true ~note:true
+        ~room:false ~start_moment:true
+        ~daily:false ~empty:false
+        ~color:true
+    in
+    Lwt_io.printl fn
   | _ ->
     Printf.eprintf
-      "usage:\t%s query d m y | edit d m y mid lid subject note\n"
+      "usage:\t%s (query|print) d m y | edit d m y mid lid subject note\n"
       Sys.argv.(0);
     exit 1
 )
