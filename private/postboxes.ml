@@ -139,7 +139,7 @@ module Query_attachments = struct
       }}
   end
 
-  let url ~host id =
+  let uri ~host id =
     let query = [
       "module", ["Messages"];
       "file", ["download"];

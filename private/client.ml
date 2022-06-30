@@ -32,8 +32,10 @@ let call mod_ {base; cookie; user_agent; ctx} xml =
     Lwt.fail_with "Client.call"
 
 module Agenda = struct
-  type lesson = Agenda.Query.Response_data.lesson
-  type assignment = Agenda.Assignment.t
+  open Agenda
+
+  type lesson = Query.Response_data.lesson
+  type assignment = Assignment.t
 
   let timestamp ~y ~m ~d =
     let open Unix in
@@ -45,8 +47,6 @@ module Agenda = struct
     int_of_float (fst (mktime tm))
 
   let call = call "Agenda"
-
-  open Agenda
 
   let lessons ctx ?class_ start end_ =
     call ctx (Query.Request.make ?class_ start end_) >|=
@@ -92,4 +92,39 @@ module Agenda = struct
       | {response = {status = "ok"; _}} ->
         Lwt.return ()
       | _ -> Lwt.fail_with "Agenda.edit"
+end
+
+module Postboxes = struct
+  open Postboxes
+
+  type nonrec box_type = box_type
+  type item = Query.Response_data.message
+  type message = Fetch_message.Response_data.message
+  type attachment = Query_attachments.Response_data.attachment
+
+  let call = call "Messages"
+
+  let messages ctx b =
+    call ctx (Query.Request.make b) >|=
+    Query.Response.of_xml_light_exn >>= function
+      | {response = {actions = {l = {data = {messages = {l}}; _} :: _}; _}} ->
+        Lwt.return l
+      | _ -> Lwt.fail_with "Postboxes.messages"
+
+  let message ctx b id =
+    call ctx (Fetch_message.Request.make b id) >|=
+    Fetch_message.Response.of_xml_light_exn >>= function
+      | {response = {actions = {l = [{data = {message}; _}]}; _}} ->
+        Lwt.return message
+      | _ -> Lwt.fail_with "Postboxes.message"
+
+  let attachments ctx b id =
+    call ctx (Query_attachments.Request.make b id) >|=
+    Query_attachments.Response.of_xml_light_exn >>= function
+      | {response = {actions = {l = [{data = {attachments = {l}}; _}]}; _}} ->
+        Lwt.return l
+      | _ -> Lwt.fail_with "Postboxes.attachments"
+
+  let attachment_uri {base; _} {Query_attachments.Response_data.file_id; _} =
+     Query_attachments.uri ~host:(Uri.host_with_default base) file_id
 end
