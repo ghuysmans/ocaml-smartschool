@@ -34,10 +34,10 @@ let call mod_ {base; cookie; user_agent; ctx} xml =
     ]
   in
   Cohttp_lwt_unix.Client.post_form ~ctx ~headers ~params uri >>= fun (resp, body) ->
-  if Cohttp.Response.status resp = `OK then
-    Cohttp_lwt.Body.to_string body >|= Xml.parse_string
-  else
-    Lwt.fail_with "Client.call"
+  match Cohttp.Response.status resp with
+  | `OK -> Cohttp_lwt.Body.to_string body >|= Xml.parse_string
+  | `Unauthorized -> Lwt.fail_with "session expired"
+  | x -> Lwt.fail_with @@ Cohttp.Code.string_of_status x
 
 module Agenda = struct
   open Agenda
