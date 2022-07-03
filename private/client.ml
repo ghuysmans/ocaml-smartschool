@@ -170,4 +170,12 @@ module Postboxes = struct
 
   let attachment_uri {base; _} {Query_attachments.Response_data.file_id; _} =
      Query_attachments.uri ~host:(Uri.host_with_default base) file_id
+
+  let delete ctx id =
+    let req = Delete.Request.make id in
+    call ctx req >|=
+    Delete.Response.of_xml_light_exn >>= function
+      | {response = {status = "ok"; _}} ->
+        Lwt.return ()
+      | _ -> Lwt.fail_with "Postboxes.delete"
 end

@@ -149,4 +149,29 @@ module Query_attachments = struct
     Uri.make ~scheme:"https" ~host ~path:"/index.php" ~query ()
 end
 
-(* FIXME file *)
+module Delete = struct
+  module Response_data = struct
+    type details = {
+      msg_id: int [@key "msgID"];
+      box_type: box_type [@key "boxType"];
+      status: int; (* FIXME *)
+    } [@@deriving of_protocol ~driver:(module Xml_light)]
+
+    type data = {
+      details: details;
+    } [@@deriving of_protocol ~driver:(module Xml_light)]
+  end
+
+  module Response = Api.Response (Response_data)
+
+  module Request = struct
+    let make id =
+      {Api.Request.command = {
+        subsystem = "postboxes";
+        action = "quick delete";
+        params = {l = [
+          "msgID", string_of_int id;
+        ]}
+      }}
+  end
+end

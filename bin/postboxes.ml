@@ -29,9 +29,14 @@ let () = Lwt_main.run (
         x.file_id x.name x.mime x.size
         (Postboxes.attachment_uri ctx x |> Uri.to_string)
     )
+  | [| _; "delete"; id |] ->
+    let ctx = get_ctx () in
+    let id = int_of_string id in
+    let%lwt () = Postboxes.delete ctx id in
+    Lwt_io.printl "done"
   | _ ->
     Printf.eprintf
-      "usage:\t%s query {in,out}box | fetch *box id\n"
+      "usage:\t%s query {in,out}box | fetch *box id | delete id\n"
       Sys.argv.(0);
     exit 1
 )
