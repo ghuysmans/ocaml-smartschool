@@ -151,25 +151,19 @@ end
 
 module Delete = struct
   module Response_data = struct
-    type details = {
-      msg_id: int [@key "msgID"];
-      box_type: box_type [@key "boxType"];
-      status: int; (* FIXME *)
-    } [@@deriving of_protocol ~driver:(module Xml_light)]
-
-    type data = {
-      details: details;
-    } [@@deriving of_protocol ~driver:(module Xml_light)]
+    type data = string [@@deriving of_protocol ~driver:(module Xml_light)]
   end
 
   module Response = Api.Response (Response_data)
 
   module Request = struct
-    let make id =
+    let make box_type id =
       {Api.Request.command = {
         subsystem = "postboxes";
-        action = "quick delete";
+        action = "delete messages";
         params = {l = [
+          "boxType", box_type; (* FIXME use the correct type *)
+          "boxID", "0";
           "msgID", string_of_int id;
         ]}
       }}
