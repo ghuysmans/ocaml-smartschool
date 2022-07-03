@@ -18,3 +18,7 @@
  (name postboxes) (modules postboxes)
  (libraries smartschool_private net_config)
  (preprocess (pps lwt_ppx)))
+(executable
+ (name dump) (modules dump)
+ (libraries har-replay smartschool_private net_config)
+ (preprocess (pps lwt_ppx)))
