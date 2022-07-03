@@ -1,7 +1,11 @@
-open Smartschool_private.Client
+module C = Smartschool_private.Client.Make (Cohttp_lwt_unix.Client)
+open C
 
 let () = Lwt_main.run (
-  let get_ctx () = Net_config.(hijack ~host ~user_agent) in
+  let get_ctx () =
+    Cohttp_lwt_unix.Net.init () |>
+    Net_config.(hijack ~host ~user_agent)
+  in
   match Sys.argv with
   | [| _; "query"; box_type |] ->
     let ctx = get_ctx () in

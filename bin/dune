@@ -12,11 +12,11 @@
  (preprocess (pps lwt_ppx)))
 (executable
  (name agenda) (modules agenda)
- (libraries smartschool_private net_config)
+ (libraries smartschool_private net_config cohttp-lwt-unix)
  (preprocess (pps lwt_ppx)))
 (executable
  (name postboxes) (modules postboxes)
- (libraries smartschool_private net_config)
+ (libraries smartschool_private net_config cohttp-lwt-unix)
  (preprocess (pps lwt_ppx)))
 (executable
  (name dump) (modules dump)

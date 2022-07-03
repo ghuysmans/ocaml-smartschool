@@ -1,11 +1,12 @@
+module Make (C : Cohttp_lwt.S.Client) = struct
 type context = {
   base: Uri.t;
   cookie: string;
   user_agent: string;
-  ctx: Cohttp_lwt_unix.Client.ctx;
+  ctx: C.ctx;
 }
 
-let hijack ~host ~user_agent =
+let hijack ~host ~user_agent ctx =
   let base = Uri.make ~scheme:"https" ~host ~path:"/index.php" () in
   let cookie =
     match Sys.getenv_opt "SMSC_COOKIE" with
@@ -15,7 +16,7 @@ let hijack ~host ~user_agent =
       read_line ()
     | Some c -> c
   in
-  {base; cookie; user_agent; ctx = Cohttp_lwt_unix.Net.init ()}
+  {base; cookie; user_agent; ctx}
 
 open Lwt.Infix
 
@@ -34,7 +35,7 @@ let call mod_ ({ctx; base; _} as c) xml =
   let uri = Uri.with_query' base ["module", mod_; "file", "dispatcher"] in
   let params = ["command", [Xml.to_string (Api.Request.to_xml_light xml)]] in
   let headers = headers c in
-  Cohttp_lwt_unix.Client.post_form ~ctx ~headers ~params uri >>= fun (resp, body) ->
+  C.post_form ~ctx ~headers ~params uri >>= fun (resp, body) ->
   match Cohttp.Response.status resp with
   | `OK -> Cohttp_lwt.Body.to_string body >|= Xml.parse_string
   | `Unauthorized -> Lwt.fail_with "session expired"
@@ -116,7 +117,7 @@ module Agenda = struct
       ]
     in
     let headers = headers c in
-    Cohttp_lwt_unix.Client.get ~ctx ~headers uri >>= fun (resp, body) ->
+    C.get ~ctx ~headers uri >>= fun (resp, body) ->
     match Cohttp.Response.status resp with
     | `OK ->
       let fn = Option.value ~default:n.title fn in
@@ -178,4 +179,5 @@ module Postboxes = struct
       | {response = {status = "ok"; _}} ->
         Lwt.return ()
       | _ -> Lwt.fail_with "Postboxes.delete"
+end
 end

@@ -9,7 +9,7 @@ dev-repo: "git+https://github.com/ghuysmans/ocaml-smartschool/"
 build: [["dune" "build" "-p" name "-j" jobs]]
 depends: [
   "dune" {>= "2.7"}
-  "cohttp-lwt-unix"
+  "cohttp-lwt"
   "xml-light"
   "base64" {>= "3.1.0"}
   "ppx_deriving_yojson"
