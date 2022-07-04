@@ -92,23 +92,47 @@ module Assignment = struct
   end
 
   module Command = struct
+    type t = {
+      moment_id: int [@key "momentID"];
+      lesson_id: int [@key "lessonID"];
+      class_ids: Ids.t [@key "classIDs"];
+    }
+
+    let to_params {moment_id; lesson_id; class_ids} =
+      [
+        "momentID", string_of_int moment_id;
+        "lessonID", string_of_int lesson_id;
+        "classIDs", String.concat "," (List.map string_of_int class_ids);
+        "filterType", "false";
+        "filterID", "false";
+        "dateID", "";
+        "assignmentIDs", "";
+        "activityID", "0";
+        "gridType", "2";
+        "tab_to_show", "0";
+        "show_assignment", "0";
+      ]
+
+    let of_params l =
+      match
+        List.fold_left (fun (m, l, c) -> function
+          | "momentID", v -> Some (int_of_string v), l, c
+          | "lessonID", v -> m, Some (int_of_string v), c
+          | "classIDs", v -> m, l, Some (String.split_on_char ',' v |> List.map int_of_string)
+          | _ -> m, l, c
+        ) (None, None, None) l
+      with
+      | None, _, _ -> failwith "Assignment.Command.moment_id"
+      | _, None, _ -> failwith "Assignment.Command.lesson_id"
+      | _, _, None -> failwith "Assignment.Command.class_ids"
+      | Some moment_id, Some lesson_id, Some class_ids ->
+        {moment_id; lesson_id; class_ids}
+
     let make ?(class_ids=[0]) ~lesson_id moment_id =
       {
         Request.subsystem = "agenda";
         action = "show form";
-        params = {l = [
-          "momentID", string_of_int moment_id;
-          "lessonID", string_of_int lesson_id;
-          "classIDs", String.concat "," (List.map string_of_int class_ids);
-          "filterType", "false";
-          "filterID", "false";
-          "dateID", "";
-          "assignmentIDs", "";
-          "activityID", "0";
-          "gridType", "2";
-          "tab_to_show", "0";
-          "show_assignment", "0";
-        ]}
+        params = {l = to_params {class_ids; lesson_id; moment_id}}
       }
   end
 end
