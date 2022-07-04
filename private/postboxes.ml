@@ -9,7 +9,7 @@ type box_type =
   [@@deriving protocol ~driver:(module Xml_light)]
 
 module Query = struct
-  module Response_data = struct
+  module Action_data = struct
     type message = {
       id: int;
       from: string;
@@ -32,18 +32,16 @@ module Query = struct
       l: message list [@key "message"];
     } [@@deriving of_protocol ~driver:(module Xml_light)]
 
-    type data = {
+    type t = {
       messages: messages;
     } [@@deriving of_protocol ~driver:(module Xml_light)]
   end
 
-  module Response = Api.Response (Response_data)
-
-  module Request = struct
+  module Command = struct
     (* FIXME continue?! *)
     let make box_type =
-      {Api.Request.command = {
-        subsystem = "postboxes";
+      {
+        Request.subsystem = "postboxes";
         action = "message list";
         params = {l = [
           "boxType", box_type; (* FIXME use the correct type *)
@@ -54,12 +52,12 @@ module Query = struct
           "poll_ids", "";
           "layout", "new";
         ]}
-      }}
+      }
   end
 end
 
 module Fetch_message = struct
-  module Response_data = struct
+  module Action_data = struct
     type receivers = {
       l: string list [@key "to"];
     } [@@deriving of_protocol ~driver:(module Xml_light)]
@@ -83,29 +81,27 @@ module Fetch_message = struct
       forwarded: Binary.t [@key "hasForward"];
     } [@@deriving of_protocol ~driver:(module Xml_light)]
 
-    type data = {
+    type t = {
       message: message;
     } [@@deriving of_protocol ~driver:(module Xml_light)]
   end
 
-  module Response = Api.Response (Response_data)
-
-  module Request = struct
+  module Command = struct
     let make box_type id =
-      {Api.Request.command = {
-        subsystem = "postboxes";
+      {
+        Request.subsystem = "postboxes";
         action = "show message";
         params = {l = [
           "msgID", string_of_int id;
           "boxType", box_type; (* FIXME use the correct type *)
           "limitList", "true";
         ]}
-      }}
+      }
   end
 end
 
 module Query_attachments = struct
-  module Response_data = struct
+  module Action_data = struct
     type attachment = {
       file_id: int [@key "fileID"];
       name: string;
@@ -119,24 +115,22 @@ module Query_attachments = struct
       l: attachment list [@key "attachment"];
     } [@@deriving of_protocol ~driver:(module Xml_light)]
 
-    type data = {
+    type t = {
       attachments: attachment_list [@key "attachmentlist"];
     } [@@deriving of_protocol ~driver:(module Xml_light)]
   end
 
-  module Response = Api.Response (Response_data)
-
-  module Request = struct
+  module Command = struct
     let make box_type id =
-      {Api.Request.command = {
-        subsystem = "postboxes";
+      {
+        Request.subsystem = "postboxes";
         action = "attachment list";
         params = {l = [
           "msgID", string_of_int id;
           "boxType", box_type; (* FIXME use the correct type *)
           "limitList", "true";
         ]}
-      }}
+      }
   end
 
   let uri ~host id =
@@ -150,22 +144,20 @@ module Query_attachments = struct
 end
 
 module Delete = struct
-  module Response_data = struct
-    type data = string [@@deriving of_protocol ~driver:(module Xml_light)]
+  module Action_data = struct
+    type t = string [@@deriving of_protocol ~driver:(module Xml_light)]
   end
 
-  module Response = Api.Response (Response_data)
-
-  module Request = struct
+  module Command = struct
     let make box_type id =
-      {Api.Request.command = {
-        subsystem = "postboxes";
+      {
+        Request.subsystem = "postboxes";
         action = "delete messages";
         params = {l = [
           "boxType", box_type; (* FIXME use the correct type *)
           "boxID", "0";
           "msgID", string_of_int id;
         ]}
-      }}
+      }
   end
 end

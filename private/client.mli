@@ -6,11 +6,14 @@ module Make : functor (C : Cohttp_lwt.S.Client) ->
 
     module Agenda :
       sig
-        type lesson = Agenda.Query.Response_data.lesson
+        type lesson = Agenda.Query.Action_data.lesson
         type assignment = Agenda.Assignment.t
         type filter = Agenda.filter
+        type command
 
         val timestamp : y:int -> m:int -> d:int -> int
+
+        val call : context -> command list -> Response.action list Lwt.t
 
         val lessons : context -> ?filter:filter -> int -> int -> lesson list Lwt.t
 
@@ -53,9 +56,12 @@ module Make : functor (C : Cohttp_lwt.S.Client) ->
     module Postboxes :
       sig
         type box_type = Postboxes.box_type
-        type item = Postboxes.Query.Response_data.message
-        type message = Postboxes.Fetch_message.Response_data.message
-        type attachment = Postboxes.Query_attachments.Response_data.attachment
+        type item = Postboxes.Query.Action_data.message
+        type message = Postboxes.Fetch_message.Action_data.message
+        type attachment = Postboxes.Query_attachments.Action_data.attachment
+        type command
+
+        val call : context -> command list -> Response.action list Lwt.t
 
         val messages : context -> string -> item list Lwt.t
 

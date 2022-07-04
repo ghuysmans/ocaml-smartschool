@@ -77,7 +77,7 @@ module Assignment = struct
       failwith "Assignment.l_of_xml_light_exn"
 
   (* subset of form; TODO create a Lesson module? *)
-  module Response_data = struct
+  module Action_data = struct
     type assignment_tab = {
       l: l [@key "assignments"];
     } [@@deriving of_protocol ~driver:(module Xml_light)]
@@ -86,17 +86,15 @@ module Assignment = struct
       a: assignment_tab [@key "assignmenttab"];
     } [@@deriving of_protocol ~driver:(module Xml_light)]
 
-    type data = {
+    type t = {
       form: form;
     } [@@deriving of_protocol ~driver:(module Xml_light)]
   end
 
-  module Response = Api.Response (Response_data)
-
-  module Request = struct
+  module Command = struct
     let make ?(class_ids=[0]) ~lesson_id moment_id =
-      {Api.Request.command = {
-        subsystem = "agenda";
+      {
+        Request.subsystem = "agenda";
         action = "show form";
         params = {l = [
           "momentID", string_of_int moment_id;
@@ -111,7 +109,7 @@ module Assignment = struct
           "tab_to_show", "0";
           "show_assignment", "0";
         ]}
-      }}
+      }
   end
 end
 
@@ -129,7 +127,7 @@ let params_of_filter x =
   ["filterType", ft; "filterID", fi]
 
 module Query = struct
-  module Response_data = struct
+  module Action_data = struct
     type lesson = {
       moments: Ids.t [@key "momentID"];
       lessons: Ids.t [@key "lessonID"];
@@ -157,17 +155,15 @@ module Query = struct
       lessons: lessons;
     } [@@deriving protocol ~driver:(module Xml_light)]
 
-    type data = {
+    type t = {
       content: content;
     } [@@deriving protocol ~driver:(module Xml_light)]
   end
 
-  module Response = Api.Response (Response_data)
-
-  module Request = struct
+  module Command = struct
     let make ?filter start end_ =
-      {Api.Request.command = {
-        subsystem = "agenda";
+      {
+        Request.subsystem = "agenda";
         action = "get lessons";
         params = {l = [
           "startDateTimestamp", string_of_int start;
@@ -180,14 +176,12 @@ module Query = struct
           "forcedClassroom", "0";
           "assignmentTypeID", "1";
         ] @ params_of_filter filter}
-      }}
+      }
   end
 end
 
 module Edit = struct
-  module Response = Api.Response (Whatever)
-
-  module Request = struct
+  module Command = struct
     type text = {
       text: string;
       moment_id: int [@key "momentid"];
@@ -218,8 +212,8 @@ module Edit = struct
       | _ -> failwith "Edit.Request.to_xml_light"
 
     let make ?filter ?(assignments=[]) ~start ~end_ ~moment_id ~note ~color ~lesson_id subject =
-      {Api.Request.command = {
-        subsystem = "agenda";
+      {
+        Request.subsystem = "agenda";
         action = "save form";
         params = {l = [
           "startDateTimestamp", string_of_int start;
@@ -257,7 +251,7 @@ module Edit = struct
           "componentsHidden", "";
           "lessonID", string_of_int lesson_id;
         ] @ params_of_filter filter}
-      }}
+      }
   end
 end
 
@@ -270,17 +264,15 @@ module Stream_file = struct
       extension: string;
     } [@@deriving of_protocol ~driver:(module Xml_light)]
 
-    type data = {
+    type t = {
       content: content;
     } [@@deriving of_protocol ~driver:(module Xml_light)]
   end
-
-  module Notification = Api.Response (Notification_data)
 end
 
 module Print = struct
   module Teacher_list = struct
-    module Request = struct
+    module Command = struct
       (* FIXME *)
       type assignment_type = int [@@deriving to_protocol ~driver:(module Xml_light)]
       let all_assignment_types = [1; 5; 6; 8; 10; 12]
@@ -300,8 +292,8 @@ module Print = struct
 
       let make ~start ~end_ ~subject ~room ~start_moment ~note ~daily ~color ~empty teacher =
         let b x = if x then "1" else "0" in
-        {Api.Request.command = {
-          subsystem = "print";
+        {
+          Request.subsystem = "print";
           action = "get teacher list pdf";
           params = {l = [
             "startDateTimestamp", string_of_int start;
@@ -317,7 +309,7 @@ module Print = struct
             "showColor", b color;
             "showEmpty", b empty;
           ] @ params_of_filter (Option.map (fun x -> Teacher x) teacher)}
-        }}
+        }
     end
   end
 end
