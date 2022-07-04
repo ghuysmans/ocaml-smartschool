@@ -10,3 +10,5 @@ let of_xml_light_exn x =
 let to_xml_light l =
   List.map string_of_int l |>
   Names.to_xml_light
+
+let params l = ["", String.concat "," (List.map string_of_int l)]

@@ -1,4 +1,5 @@
 open Protocol_conv_xml
+open Request.Params.D
 
 module Assignment = struct
   type end_moment = {
@@ -93,16 +94,13 @@ module Assignment = struct
 
   module Command = struct
     type t = {
-      moment_id: int [@key "momentID"];
-      lesson_id: int [@key "lessonID"];
-      class_ids: Ids.t [@key "classIDs"];
-    }
+      moment_id: int [@params key "momentID"];
+      lesson_id: int [@params key "lessonID"];
+      class_ids: Ids.t [@params key "classIDs"];
+    } [@@deriving params]
 
-    let to_params {moment_id; lesson_id; class_ids} =
-      [
-        "momentID", string_of_int moment_id;
-        "lessonID", string_of_int lesson_id;
-        "classIDs", String.concat "," (List.map string_of_int class_ids);
+    let params x =
+      params x @ [
         "filterType", "false";
         "filterID", "false";
         "dateID", "";
@@ -132,7 +130,7 @@ module Assignment = struct
       {
         Request.subsystem = "agenda";
         action = "show form";
-        params = {l = to_params {class_ids; lesson_id; moment_id}}
+        params = {l = params {class_ids; lesson_id; moment_id}}
       }
   end
 end
