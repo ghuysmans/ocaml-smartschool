@@ -7,19 +7,21 @@ let () = Lwt_main.run (
     Net_config.(hijack ~host ~user_agent)
   in
   match Sys.argv with
-  | [| _; "query"; box_type |] ->
+  | [| _; "query"; b |] ->
     let ctx = get_ctx () in
-    let%lwt l = Postboxes.messages ctx box_type in
+    let box = Postboxes.box_of_string b in
+    let%lwt l = Postboxes.messages ctx box in
     l |> Lwt_list.iter_s (fun (x : Postboxes.item) ->
       Lwt_io.printf "id=%d %d %s (%s)\n" x.id x.attachments x.subject x.date
     )
-  | [| _; "fetch"; box_type; id |] ->
+  | [| _; "fetch"; b; id |] ->
     let ctx = get_ctx () in
     let id = int_of_string id in
-    let%lwt m = Postboxes.message ctx box_type id in
+    let box = Postboxes.box_of_string b in
+    let%lwt m = Postboxes.message ctx box id in
     let%lwt l =
       if m.attachments > 0 then
-        Postboxes.attachments ctx box_type id
+        Postboxes.attachments ctx box id
       else
         Lwt.return []
     in
@@ -33,10 +35,11 @@ let () = Lwt_main.run (
         x.file_id x.name x.mime x.size
         (Postboxes.attachment_uri ctx x |> Uri.to_string)
     )
-  | [| _; "delete"; box_type; id |] ->
+  | [| _; "delete"; b; id |] ->
     let ctx = get_ctx () in
+    let box = Postboxes.box_of_string b in
     let id = int_of_string id in
-    let%lwt () = Postboxes.delete ctx box_type id in
+    let%lwt () = Postboxes.delete ctx box id in
     Lwt_io.printl "done"
   | _ ->
     Printf.eprintf

@@ -142,11 +142,13 @@ end
 module Postboxes = struct
   open Postboxes
 
-  type nonrec box_type = box_type
+  type nonrec box = Box.t
   type item = Query.Action_data.message
   type message = Fetch_message.Action_data.message
   type attachment = Query_attachments.Action_data.attachment
   type command = Request.command
+
+  let box_of_string = Box.of_string
 
   let call = call "Messages"
 

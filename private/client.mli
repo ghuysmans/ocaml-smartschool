@@ -55,22 +55,24 @@ module Make : functor (C : Cohttp_lwt.S.Client) ->
 
     module Postboxes :
       sig
-        type box_type = Postboxes.box_type
+        type box = Postboxes.Box.t
         type item = Postboxes.Query.Action_data.message
         type message = Postboxes.Fetch_message.Action_data.message
         type attachment = Postboxes.Query_attachments.Action_data.attachment
         type command
 
+        val box_of_string : string -> box
+
         val call : context -> command list -> Response.action list Lwt.t
 
-        val messages : context -> string -> item list Lwt.t
+        val messages : context -> box -> item list Lwt.t
 
-        val message : context -> string -> int -> message Lwt.t
+        val message : context -> box -> int -> message Lwt.t
 
-        val attachments : context -> string -> int -> attachment list Lwt.t
+        val attachments : context -> box -> int -> attachment list Lwt.t
 
         val attachment_uri : context -> attachment -> Uri.t
 
-        val delete : context -> string -> int -> unit Lwt.t
+        val delete : context -> box -> int -> unit Lwt.t
       end
   end
