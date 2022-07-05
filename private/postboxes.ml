@@ -1,5 +1,5 @@
 open Protocol_conv_xml
-open Request.Params.D
+open Params.D
 
 module Box = struct
   type t =
@@ -70,14 +70,6 @@ module Query = struct
         "poll_ids", "";
         "layout", "new";
       ]
-
-    (* FIXME continue?! *)
-    let make box =
-      {
-        Request.subsystem = "postboxes";
-        action = "message list";
-        params = {l = params {box}}
-      }
   end
 end
 
@@ -121,13 +113,6 @@ module Fetch_message = struct
       params x @ [
         "limitList", "true";
       ]
-
-    let make box id =
-      {
-        Request.subsystem = "postboxes";
-        action = "show message";
-        params = {l = params {box; id}}
-      }
   end
 end
 
@@ -161,13 +146,6 @@ module Query_attachments = struct
       params x @ [
         "limitList", "true";
       ]
-
-    let make box id =
-      {
-        Request.subsystem = "postboxes";
-        action = "attachment list";
-        params = {l = params {box; id}}
-      }
   end
 
   let uri ~host id =
@@ -190,12 +168,5 @@ module Delete = struct
       box: Box.t;
       id: int [@params key "msgID"];
     } [@@deriving params]
-
-    let make box id =
-      {
-        Request.subsystem = "postboxes";
-        action = "delete messages";
-        params = {l = params {box; id}}
-      }
   end
 end

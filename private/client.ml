@@ -68,13 +68,13 @@ module Agenda = struct
 
   let call = call "Agenda"
 
-  let lessons ctx ?filter start end_ =
-    call ctx [Query.Command.make ?filter start end_] >>= function
+  let lessons ctx ?(filter=Any) start end_ =
+    call ctx [Request.Lessons {start; end_; filter}] >>= function
       | [Response.Lessons l] -> Lwt.return l
       | _ -> Lwt.fail_with "Agenda.lessons"
 
-  let assignments ctx ~lesson_id moment_id =
-    call ctx [Assignment.Command.make ~lesson_id moment_id] >>= function
+  let assignments ctx ?(class_ids=[]) ~lesson_id moment_id =
+    call ctx [Request.Assignments {class_ids; lesson_id; moment_id}] >>= function
       | [Response.Assignments l] -> Lwt.return l
       | _ -> Lwt.fail_with "Agenda.assignments"
 
@@ -92,16 +92,33 @@ module Agenda = struct
         Lwt.return (l, [])
     )
 
-  let edit ctx ~start ~end_ ~moment_id ~lesson_id ?color ?note ?subject t =
+  let edit ctx ?(filter=Any) ?(assignments=[]) ~start ~end_ ~moment_id ~lesson_id ?color ?note ?subject t =
     let req =
       let open Query.Action_data in
-      Edit.Command.make
-        ~start ~end_
-        ~moment_id
-        ~lesson_id
-        ~color:(Option.value color ~default:t.color)
-        ~note:(Option.value note ~default:t.note)
-        (Option.value subject ~default:t.subject)
+      Request.Lesson_edit {
+        start;
+        end_;
+        xml = {
+          moment_id;
+          subjects = {
+            subject = {
+              text = Option.value subject ~default:t.subject;
+              moment_id
+            }
+          };
+          notes = {
+            note = {
+              text = Option.value note ~default:t.note;
+              moment_id
+            }
+          };
+          assignments;
+          unique_ids = "";
+        };
+        lesson_id;
+        color = Option.value color ~default:t.color;
+        filter;
+      }
     in
     call ctx [req] >>= function
       | [Response.Lessons _] -> Lwt.return ()
@@ -133,7 +150,19 @@ module Agenda = struct
 
   module Print = struct
     let teacher_list ?teacher ?fn ctx ~start ~end_ ~subject ~room ~start_moment ~note ~daily ~color ~empty =
-      call ctx [Print.Teacher_list.Command.make ~start ~end_ ~subject ~room ~start_moment ~note ~daily ~color ~empty teacher] >>= function
+      let req =
+        let l = Agenda.Print.Teacher_list.Command.all_assignment_types in
+        Request.Teacher_print {
+          start; end_;
+          assignment_types = {items = {l}};
+          subject; room; start_moment; note; daily; color; empty;
+          filter =
+            match teacher with
+            | Some x -> Teacher x
+            | None -> Any
+        }
+      in
+      call ctx [req] >>= function
         | [Response.Agenda_notification x] -> stream ctx ?fn x
         | _ -> Lwt.fail_with "Agenda.Print.teacher_list"
   end
@@ -152,18 +181,18 @@ module Postboxes = struct
 
   let call = call "Messages"
 
-  let messages ctx b =
-    call ctx [Query.Command.make b] >>= function
+  let messages ctx box =
+    call ctx [Request.Messages {box}] >>= function
       | [Response.Messages l; Unknown _; Unknown _] -> Lwt.return l
       | _ -> Lwt.fail_with "Postboxes.messages"
 
-  let message ctx b id =
-    call ctx [Fetch_message.Command.make b id] >>= function
+  let message ctx box id =
+    call ctx [Request.Message {box; id}] >>= function
       | [Response.Message m] -> Lwt.return m
       | _ -> Lwt.fail_with "Postboxes.message"
 
-  let attachments ctx b id =
-    call ctx [Query_attachments.Command.make b id] >>= function
+  let attachments ctx box id =
+    call ctx [Request.Attachments {box; id}] >>= function
       | [Response.Attachments l] -> Lwt.return l
       | _ -> Lwt.fail_with "Postboxes.attachments"
 
@@ -216,8 +245,8 @@ module Postboxes = struct
       end
     | x -> Lwt.fail_with @@ Cohttp.Code.string_of_status x
 
-  let delete ctx b id =
-    call ctx [Delete.Command.make b id] >>= function
+  let delete ctx box id =
+    call ctx [Request.Message_delete {box; id}] >>= function
       | [Response.Message_delete] -> Lwt.return ()
       | _ -> Lwt.fail_with "Postboxes.delete"
 end

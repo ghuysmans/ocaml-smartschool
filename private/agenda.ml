@@ -1,5 +1,5 @@
 open Protocol_conv_xml
-open Request.Params.D
+open Params.D
 
 module Assignment = struct
   type end_moment = {
@@ -125,13 +125,6 @@ module Assignment = struct
       | _, _, None -> failwith "Assignment.Command.class_ids"
       | Some moment_id, Some lesson_id, Some class_ids ->
         {moment_id; lesson_id; class_ids}
-
-    let make ?(class_ids=[0]) ~lesson_id moment_id =
-      {
-        Request.subsystem = "agenda";
-        action = "show form";
-        params = {l = params {class_ids; lesson_id; moment_id}}
-      }
   end
 end
 
@@ -200,13 +193,6 @@ module Query = struct
         "forcedClassroom", "0";
         "assignmentTypeID", "1";
       ]
-
-    let make ?(filter=Any) start end_ =
-      {
-        Request.subsystem = "agenda";
-        action = "get lessons";
-        params = {l = params {start; end_; filter}}
-      }
   end
 end
 
@@ -268,28 +254,6 @@ module Edit = struct
         "copyYpType", "hour";
         "componentsHidden", "";
       ]
-
-    let make ?(filter=Any) ?(assignments=[]) ~start ~end_ ~moment_id ~note ~color ~lesson_id subject =
-      {
-        Request.subsystem = "agenda";
-        action = "save form";
-        params = {
-          l = params {
-            start;
-            end_;
-            xml = {
-              moment_id;
-              subjects = {subject = {text = subject; moment_id}};
-              notes = {note = {text = note; moment_id}};
-              assignments;
-              unique_ids = "";
-            };
-            lesson_id;
-            color;
-            filter;
-          }
-        }
-      }
   end
 end
 
@@ -343,23 +307,6 @@ module Print = struct
         empty: bool [@params key "showEmpty"];
         filter: filter;
       } [@@deriving params]
-
-      let make ~start ~end_ ~subject ~room ~start_moment ~note ~daily ~color ~empty teacher =
-        {
-          Request.subsystem = "print";
-          action = "get teacher list pdf";
-          params = {
-            l = params {
-              start; end_;
-              assignment_types = {items = {l = all_assignment_types}};
-              subject; room; start_moment; note; daily; color; empty;
-              filter =
-                match teacher with
-                | Some x -> Teacher x
-                | None -> Any
-            }
-          }
-        }
     end
   end
 end

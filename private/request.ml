@@ -1,67 +1,55 @@
 open Protocol_conv_xml
 
-module Params = struct
-  type param = string * string
-  type 'a derived = 'a -> param list
-  type 'a attribute = Key of string
-
-  module D = struct
-    let key x = Key x
-    let params_bool x = ["", if x then "true" else "false"]
-    let params_int x = ["", string_of_int x]
-    let params_string x = ["", x]
-  end
-
-  module T = struct
-    type nonrec 'a t = 'a derived
-    type nonrec 'a attribute = 'a attribute
-  end
-
-  let apply_iso t _ b x = t (b x)
-
-  open Ppx_type_directed_value_runtime.Type_directed
-
-  let rec of_record : type a len. (a, len) Record(T).t -> a T.t = fun r ->
-    let m v x =
-      match v.Key.value x with
-      | [_, s] ->
-        let name =
-          match v.attribute with
-          | Some (Key k) -> k
-          | None -> v.name
-        in
-        [name, s]
-      | c ->
-        (* keep composite params unchanged *)
-        c
-    in
-    match r with
-    | [ v ]               -> fun (x, ()) -> m v x
-    | v :: (_ :: _ as tl) -> fun (x, y) -> m v x @ of_record tl y
-
-  let param_to_xml_light (name, value) =
-    let v = if value = "" then [] else [Xml.PCData value] in
-    Xml.Element ("param", ["name", name], v)
-
-  let param_of_xml_light_exn = function
-    | Xml.(Element ("param", ["name", name], [])) -> name, ""
-    | Xml.(Element ("param", ["name", name], [PCData value])) -> name, value
-    | _ -> failwith "Params.of_xml_light_exn"
-
+module Command = struct
   type t = {
-    l: param list [@key "param"];
+    subsystem: string;
+    action: string;
+    params: Whatever.t;
   } [@@deriving protocol ~driver:(module Xml_light)]
 end
 
-type command = {
-  subsystem: string;
-  action: string;
-  params: Params.t;
-} [@@deriving protocol ~driver:(module Xml_light)]
+type command =
+  | Assignments of Agenda.Assignment.Command.t
+  | Lessons of Agenda.Query.Command.t
+  | Lesson_edit of Agenda.Edit.Command.t
+  | Teacher_print of Agenda.Print.Teacher_list.Command.t
+  | Messages of Postboxes.Query.Command.t
+  | Message of Postboxes.Fetch_message.Command.t
+  | Attachments of Postboxes.Query_attachments.Command.t
+  | Message_delete of Postboxes.Delete.Command.t
+  | Unknown of Command.t
+
+let command_to_xml_light c =
+  let f subsystem action f p =
+    Command.to_xml_light {
+      subsystem;
+      action;
+      params = Params.to_xml_light {l = f p};
+    }
+  in
+  match c with
+  | Assignments x ->
+    f "agenda" "show form" Agenda.Assignment.Command.params x
+  | Lessons x ->
+    f "agenda" "get lessons" Agenda.Query.Command.params x
+  | Lesson_edit x ->
+    f "agenda" "save form" Agenda.Edit.Command.params x
+  | Teacher_print x ->
+    f "print" "get teacher list pdf" Agenda.Print.Teacher_list.Command.params x
+  | Messages x ->
+    f "postboxes" "message list" Postboxes.Query.Command.params x
+  | Message x ->
+    f "postboxes" "show message" Postboxes.Fetch_message.Command.params x
+  | Attachments x ->
+    f "postboxes" "attachment list" Postboxes.Query_attachments.Command.params x
+  | Message_delete x ->
+    f "postboxes" "delete messages" Postboxes.Delete.Command.params x
+  | Unknown c ->
+    Command.to_xml_light c
 
 type t = {
   l: command list [@key "command"];
-} [@@deriving protocol ~driver:(module Xml_light)]
+} [@@deriving to_protocol ~driver:(module Xml_light)]
 
 let to_xml_light t =
   match to_xml_light t with

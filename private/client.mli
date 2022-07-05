@@ -17,7 +17,12 @@ module Make : functor (C : Cohttp_lwt.S.Client) ->
 
         val lessons : context -> ?filter:filter -> int -> int -> lesson list Lwt.t
 
-        val assignments : context -> lesson_id:int -> int -> assignment list Lwt.t
+        val assignments :
+          context ->
+          ?class_ids:int list ->
+          lesson_id:int ->
+          int ->
+          assignment list Lwt.t
 
         val lessons_with_assignments :
           context ->
@@ -28,6 +33,8 @@ module Make : functor (C : Cohttp_lwt.S.Client) ->
 
         val edit :
           context ->
+          ?filter:filter ->
+          ?assignments:assignment list ->
           start:int ->
           end_:int ->
           moment_id:int ->
