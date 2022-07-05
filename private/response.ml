@@ -1,13 +1,10 @@
 open Protocol_conv_xml
 
 module Action = struct
-  type xml = Xml.xml
-  let xml_of_xml_light_exn x = x
-
   type t = {
     subsystem: string;
     command: string;
-    data: xml;
+    data: Whatever.t;
   } [@@deriving of_protocol ~driver:(module Xml_light)]
 end
 
