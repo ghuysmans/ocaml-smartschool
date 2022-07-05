@@ -170,6 +170,52 @@ module Postboxes = struct
   let attachment_uri {base; _} {Query_attachments.Action_data.file_id; _} =
      Query_attachments.uri ~host:(Uri.host_with_default base) file_id
 
+  let attachment ({base; ctx; user_agent; _} as c) ?fn a =
+    let uri = attachment_uri c a in
+    let headers = headers c in
+    C.get ~ctx ~headers uri >>= fun (resp, body) ->
+    Cohttp_lwt.Body.drain_body body >>= fun () ->
+    match Cohttp.Response.status resp with
+    | `Found ->
+      begin match Cohttp.Header.get_location resp.headers with
+      | None -> Lwt.fail_with "missing Location"
+      | Some uri ->
+        let headers =
+          Cohttp.Header.of_list [
+            "referer", Uri.with_path base "/" |> Uri.to_string;
+            "user-agent", user_agent;
+          ]
+        in
+        C.get ~ctx ~headers uri >>= fun (resp, body) ->
+        match Cohttp.Response.status resp with
+        | `OK ->
+          let fn =
+            match fn with
+            | Some x -> Ok x
+            | None ->
+              match Cohttp.Header.get resp.headers "content-disposition" with
+              | None -> Error "missing content-disposition"
+              | Some x ->
+                let open Multipart_form.Content_disposition in
+                match of_string (x ^ "\r\n") with
+                | Error (`Msg e) -> Error e
+                | Ok cd ->
+                  match filename cd with
+                  | Some x -> Ok x
+                  | None -> Error "missing filename"
+          in
+          begin match fn with
+          | Error e -> Lwt.fail_with e
+          | Ok fn ->
+            Lwt_io.(open_file ~mode:Output fn) >>= fun out ->
+            Cohttp_lwt.Body.write_body (Lwt_io.write out) body >>= fun () ->
+            Lwt_io.close out >>= fun () ->
+            Lwt.return fn
+          end
+        | x -> Lwt.fail_with @@ Cohttp.Code.string_of_status x
+      end
+    | x -> Lwt.fail_with @@ Cohttp.Code.string_of_status x
+
   let delete ctx b id =
     call ctx [Delete.Command.make b id] >>= function
       | [Response.Message_delete] -> Lwt.return ()

@@ -73,6 +73,8 @@ module Make : functor (C : Cohttp_lwt.S.Client) ->
 
         val attachment_uri : context -> attachment -> Uri.t
 
+        val attachment : context -> ?fn:string -> attachment -> string Lwt.t
+
         val delete : context -> box -> int -> unit Lwt.t
       end
   end

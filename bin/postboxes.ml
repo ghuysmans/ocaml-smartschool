@@ -41,9 +41,18 @@ let () = Lwt_main.run (
     let id = int_of_string id in
     let%lwt () = Postboxes.delete ctx box id in
     Lwt_io.printl "done"
+  | [| _; "download"; b; id |] ->
+    let ctx = get_ctx () in
+    let id = int_of_string id in
+    let box = Postboxes.box_of_string b in
+    let%lwt l = Postboxes.attachments ctx box id in
+    Lwt_list.iter_s (fun a ->
+      let%lwt fn = Postboxes.attachment ctx a in
+      Lwt_io.printl fn
+    ) l
   | _ ->
     Printf.eprintf
-      "usage:\t%s query {in,out}box | (fetch|delete) *box id\n"
+      "usage:\t%s query {in,out}box | (fetch|delete|download) *box id\n"
       Sys.argv.(0);
     exit 1
 )
