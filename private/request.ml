@@ -3,10 +3,12 @@ open Protocol_conv_xml
 module Params = struct
   type param = string * string
   type 'a derived = 'a -> param list
-  type 'a attribute = Key of string (* TODO default *)
+  type 'a attribute = Key of string | Composite
 
   module D = struct
     let key x = Key x
+    let composite = Composite
+    let params_bool x = ["", if x then "true" else "false"]
     let params_int x = ["", string_of_int x]
     let params_string x = ["", x]
   end
@@ -22,12 +24,15 @@ module Params = struct
 
   let rec of_record : type a len. (a, len) Record(T).t -> a T.t = fun r ->
     let m v x =
-      let name =
+      let relabel =
         match v.Key.attribute with
-        | Some (Key k) -> k
-        | None -> v.name
+        | Some Composite -> None
+        | Some (Key k) -> Some k
+        | None -> Some v.name
       in
-      List.map (fun (_, s) -> name, s) (v.value x)
+      match relabel with
+      | Some name -> List.map (fun (_, s) -> name, s) (v.value x)
+      | None -> v.value x
     in
     match r with
     | [ v ]               -> fun (x, ()) -> m v x

@@ -1,4 +1,5 @@
 open Protocol_conv_xml
+open Request.Params.D
 
 type box_type =
   | Inbox [@key "inbox"]
@@ -38,20 +39,26 @@ module Query = struct
   end
 
   module Command = struct
+    type t = {
+      box_type: string [@params key "boxType"]; (* FIXME use the correct type *)
+    } [@@deriving params]
+
+    let params x =
+      params x @ [
+        "boxID", "0";
+        "sortField", "date"; (* TODO *)
+        "sortKey", "desc";
+        "poll", "false";
+        "poll_ids", "";
+        "layout", "new";
+      ]
+
     (* FIXME continue?! *)
     let make box_type =
       {
         Request.subsystem = "postboxes";
         action = "message list";
-        params = {l = [
-          "boxType", box_type; (* FIXME use the correct type *)
-          "boxID", "0";
-          "sortField", "date";
-          "sortKey", "desc";
-          "poll", "false";
-          "poll_ids", "";
-          "layout", "new";
-        ]}
+        params = {l = params {box_type}}
       }
   end
 end
@@ -87,15 +94,21 @@ module Fetch_message = struct
   end
 
   module Command = struct
+    type t = {
+      box_type: string [@params key "boxType"]; (* FIXME use the correct type *)
+      id: int [@params key "msgID"];
+    } [@@deriving params]
+
+    let params x =
+      params x @ [
+        "limitList", "true";
+      ]
+
     let make box_type id =
       {
         Request.subsystem = "postboxes";
         action = "show message";
-        params = {l = [
-          "msgID", string_of_int id;
-          "boxType", box_type; (* FIXME use the correct type *)
-          "limitList", "true";
-        ]}
+        params = {l = params {box_type; id}}
       }
   end
 end
@@ -121,15 +134,21 @@ module Query_attachments = struct
   end
 
   module Command = struct
+    type t = {
+      box_type: string [@params key "boxType"]; (* FIXME use the correct type *)
+      id: int [@params key "msgID"];
+    } [@@deriving params]
+
+    let params x =
+      params x @ [
+        "limitList", "true";
+      ]
+
     let make box_type id =
       {
         Request.subsystem = "postboxes";
         action = "attachment list";
-        params = {l = [
-          "msgID", string_of_int id;
-          "boxType", box_type; (* FIXME use the correct type *)
-          "limitList", "true";
-        ]}
+        params = {l = params {box_type; id}}
       }
   end
 
@@ -149,15 +168,21 @@ module Delete = struct
   end
 
   module Command = struct
+    type t = {
+      box_type: string [@params key "boxType"]; (* FIXME use the correct type *)
+      id: int [@params key "msgID"];
+    } [@@deriving params]
+
+    let params x =
+      params x @ [
+        "boxID", "0";
+      ]
+
     let make box_type id =
       {
         Request.subsystem = "postboxes";
         action = "delete messages";
-        params = {l = [
-          "boxType", box_type; (* FIXME use the correct type *)
-          "boxID", "0";
-          "msgID", string_of_int id;
-        ]}
+        params = {l = params {box_type; id}}
       }
   end
 end

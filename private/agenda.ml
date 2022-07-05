@@ -136,15 +136,16 @@ module Assignment = struct
 end
 
 type filter =
+  | Any
   | Class of int
   | Teacher of int
 
-let params_of_filter x =
+let params_filter x =
   let ft, fi =
     match x with
-    | None -> "false", "false"
-    | Some (Class c) -> "Class", string_of_int c
-    | Some (Teacher t) -> "Teacher", string_of_int t
+    | Any -> "false", "false"
+    | Class c -> "Class", string_of_int c
+    | Teacher t -> "Teacher", string_of_int t
   in
   ["filterType", ft; "filterID", fi]
 
@@ -183,21 +184,28 @@ module Query = struct
   end
 
   module Command = struct
-    let make ?filter start end_ =
+    type t = {
+      start: int [@params key "startDateTimestamp"];
+      end_: int [@params key "endDateTimestamp"];
+      filter: filter [@params composite];
+    } [@@deriving params]
+
+    let params x =
+      params x @ [
+        "gridType", "2";
+        "classID", "0";
+        "endDateTimestampOld", "1655533390"; (* FIXME? *)
+        "forcedTeacher", "0";
+        "forcedClass", "0";
+        "forcedClassroom", "0";
+        "assignmentTypeID", "1";
+      ]
+
+    let make ?(filter=Any) start end_ =
       {
         Request.subsystem = "agenda";
         action = "get lessons";
-        params = {l = [
-          "startDateTimestamp", string_of_int start;
-          "endDateTimestamp", string_of_int end_;
-          "gridType", "2";
-          "classID", "0";
-          "endDateTimestampOld", "1655533390"; (* FIXME? *)
-          "forcedTeacher", "0";
-          "forcedClass", "0";
-          "forcedClassroom", "0";
-          "assignmentTypeID", "1";
-        ] @ params_of_filter filter}
+        params = {l = params {start; end_; filter}}
       }
   end
 end
@@ -220,7 +228,7 @@ module Edit = struct
     (* FIXME *)
     type nil = string [@@deriving to_protocol ~driver:(module Xml_light)]
 
-    type t = {
+    type xml = {
       moment_id: int [@key "momentid"];
       subjects: subjects;
       notes: notes;
@@ -228,51 +236,59 @@ module Edit = struct
       unique_ids: nil [@key "uniqueids"];
     } [@@deriving to_protocol ~driver:(module Xml_light)]
 
-    let to_xml_light t =
-      match to_xml_light t with
+    let xml_to_xml_light t =
+      match xml_to_xml_light t with
       | Xml.Element (_, _, ch) -> Xml.Element ("xml", [], ch)
-      | _ -> failwith "Edit.Request.to_xml_light"
+      | _ -> failwith "Edit.Request.xml_to_xml_light"
 
-    let make ?filter ?(assignments=[]) ~start ~end_ ~moment_id ~note ~color ~lesson_id subject =
+    let params_xml x = ["", Xml.to_string (xml_to_xml_light x)]
+
+    type t = {
+      start: int [@params key "startDateTimestamp"];
+      end_: int [@params key "endDateTimestamp"];
+      xml: xml [@params key "xmlString"];
+      lesson_id: int [@params key "lessonID"];
+      color: string;
+      filter: filter [@params composite];
+    } [@@deriving params]
+
+    let params x =
+      params x @ [
+        "gridType", "2";
+        "filterMemory", "0";
+        "copySubject", "0";
+        "copySubjectType", "hour";
+        "copyMaterial", "0";
+        "copyMaterialType", "hour";
+        "copyReservations", "0";
+        "copyReservationsType", "hour";
+        "copyNote", "0";
+        "copyNoteType", "hour";
+        "copyYp", "0";
+        "copyYpType", "hour";
+        "componentsHidden", "";
+      ]
+
+    let make ?(filter=Any) ?(assignments=[]) ~start ~end_ ~moment_id ~note ~color ~lesson_id subject =
       {
         Request.subsystem = "agenda";
         action = "save form";
-        params = {l = [
-          "startDateTimestamp", string_of_int start;
-          "endDateTimestamp", string_of_int end_;
-          "xmlString", Xml.to_string @@ to_xml_light @@ {
-            moment_id;
-            subjects = {
-              subject = {
-                text = subject;
-                moment_id;
-              }
+        params = {
+          l = params {
+            start;
+            end_;
+            xml = {
+              moment_id;
+              subjects = {subject = {text = subject; moment_id}};
+              notes = {note = {text = note; moment_id}};
+              assignments;
+              unique_ids = "";
             };
-            notes = {
-              note = {
-                text = note;
-                moment_id;
-              }
-            };
-            assignments;
-            unique_ids = "";
-          };
-          "gridType", "2";
-          "filterMemory", "0";
-          "copySubject", "0";
-          "copySubjectType", "hour";
-          "copyMaterial", "0";
-          "copyMaterialType", "hour";
-          "copyReservations", "0";
-          "copyReservationsType", "hour";
-          "copyNote", "0";
-          "copyNoteType", "hour";
-          "copyYp", "0";
-          "copyYpType", "hour";
-          "color", color;
-          "componentsHidden", "";
-          "lessonID", string_of_int lesson_id;
-        ] @ params_of_filter filter}
+            lesson_id;
+            color;
+            filter;
+          }
+        }
       }
   end
 end
@@ -303,34 +319,46 @@ module Print = struct
         l: assignment_type list [@key "item"];
       } [@@deriving to_protocol ~driver:(module Xml_light)]
 
-      type t = {
+      type xml = {
         items: items;
       } [@@deriving to_protocol ~driver:(module Xml_light)]
 
-      let to_xml_light t =
-        match to_xml_light t with
+      let xml_to_xml_light t =
+        match xml_to_xml_light t with
         | Xml.Element (_, _, ch) -> Xml.Element ("xml", [], ch)
-        | _ -> failwith "Print.Teacher_list.Request.to_xml_light"
+        | _ -> failwith "Print.Teacher_list.Request.xml_to_xml_light"
+
+      let params_xml x = ["", Xml.to_string (xml_to_xml_light x)]
+
+      type t = {
+        start: int [@params key "startDateTimestamp"];
+        end_: int [@params key "endDateTimestamp"];
+        assignment_types: xml [@params key "assignmentTypesXml"];
+        subject: bool [@params key "showSubject"];
+        room: bool [@params key "showClassroom"];
+        start_moment: bool [@params key "showStartMoments"];
+        note: bool [@params key "showNote"];
+        daily: bool [@params key "showDaynewpage"];
+        color: bool [@params key "showColor"];
+        empty: bool [@params key "showEmpty"];
+        filter: filter [@params composite];
+      } [@@deriving params]
 
       let make ~start ~end_ ~subject ~room ~start_moment ~note ~daily ~color ~empty teacher =
-        let b x = if x then "1" else "0" in
         {
           Request.subsystem = "print";
           action = "get teacher list pdf";
-          params = {l = [
-            "startDateTimestamp", string_of_int start;
-            "endDateTimestamp", string_of_int end_;
-            "assignmentTypesXml", Xml.to_string @@ to_xml_light @@ {
-              items = {l = all_assignment_types}
-            };
-            "showSubject", b subject;
-            "showClassroom", b room;
-            "showStartMoments", b start_moment;
-            "showNote", b note;
-            "showDaynewpage", b daily;
-            "showColor", b color;
-            "showEmpty", b empty;
-          ] @ params_of_filter (Option.map (fun x -> Teacher x) teacher)}
+          params = {
+            l = params {
+              start; end_;
+              assignment_types = {items = {l = all_assignment_types}};
+              subject; room; start_moment; note; daily; color; empty;
+              filter =
+                match teacher with
+                | Some x -> Teacher x
+                | None -> Any
+            }
+          }
         }
     end
   end
