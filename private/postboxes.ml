@@ -59,7 +59,7 @@ module Query = struct
 
   module Command = struct
     type t = {
-      box: Box.t [@params composite];
+      box: Box.t;
     } [@@deriving params]
 
     let params x =
@@ -113,7 +113,7 @@ module Fetch_message = struct
 
   module Command = struct
     type t = {
-      box: Box.t [@params composite];
+      box: Box.t;
       id: int [@params key "msgID"];
     } [@@deriving params]
 
@@ -153,7 +153,7 @@ module Query_attachments = struct
 
   module Command = struct
     type t = {
-      box: Box.t [@params composite];
+      box: Box.t;
       id: int [@params key "msgID"];
     } [@@deriving params]
 
@@ -187,7 +187,7 @@ module Delete = struct
 
   module Command = struct
     type t = {
-      box: Box.t [@params composite];
+      box: Box.t;
       id: int [@params key "msgID"];
     } [@@deriving params]
 

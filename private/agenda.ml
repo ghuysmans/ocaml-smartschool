@@ -187,7 +187,7 @@ module Query = struct
     type t = {
       start: int [@params key "startDateTimestamp"];
       end_: int [@params key "endDateTimestamp"];
-      filter: filter [@params composite];
+      filter: filter;
     } [@@deriving params]
 
     let params x =
@@ -249,7 +249,7 @@ module Edit = struct
       xml: xml [@params key "xmlString"];
       lesson_id: int [@params key "lessonID"];
       color: string;
-      filter: filter [@params composite];
+      filter: filter;
     } [@@deriving params]
 
     let params x =
@@ -341,7 +341,7 @@ module Print = struct
         daily: bool [@params key "showDaynewpage"];
         color: bool [@params key "showColor"];
         empty: bool [@params key "showEmpty"];
-        filter: filter [@params composite];
+        filter: filter;
       } [@@deriving params]
 
       let make ~start ~end_ ~subject ~room ~start_moment ~note ~daily ~color ~empty teacher =
