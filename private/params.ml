@@ -104,3 +104,8 @@ let param_of_xml_light_exn = function
 type t = {
   l: param list [@key "param"];
 } [@@deriving protocol ~driver:(module Xml_light)]
+
+let to_assoc p x =
+  match p with
+  | Complex {fwd; _} -> fwd x
+  | _ -> failwith "params_to_assoc"

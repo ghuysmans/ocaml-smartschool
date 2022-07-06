@@ -24,11 +24,7 @@ let command_to_xml_light c =
     Command.to_xml_light {
       subsystem;
       action;
-      params = Params.to_xml_light {l =
-        match f with
-        | Params.Complex {fwd; _} -> fwd p
-        | _ -> failwith "command_to_xml_light"
-      };
+      params = Params.(to_xml_light {l = to_assoc f p});
     }
   in
   match c with
