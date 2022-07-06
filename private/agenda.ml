@@ -110,21 +110,6 @@ module Assignment = struct
         "tab_to_show", "0";
         "show_assignment", "0";
       ]
-
-    let of_params l =
-      match
-        List.fold_left (fun (m, l, c) -> function
-          | "momentID", v -> Some (int_of_string v), l, c
-          | "lessonID", v -> m, Some (int_of_string v), c
-          | "classIDs", v -> m, l, Some (String.split_on_char ',' v |> List.map int_of_string)
-          | _ -> m, l, c
-        ) (None, None, None) l
-      with
-      | None, _, _ -> failwith "Assignment.Command.moment_id"
-      | _, None, _ -> failwith "Assignment.Command.lesson_id"
-      | _, _, None -> failwith "Assignment.Command.class_ids"
-      | Some moment_id, Some lesson_id, Some class_ids ->
-        {moment_id; lesson_id; class_ids}
   end
 end
 
