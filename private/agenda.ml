@@ -308,13 +308,13 @@ module Print = struct
         start: int [@params key "startDateTimestamp"];
         end_: int [@params key "endDateTimestamp"];
         assignment_types: xml [@params key "assignmentTypesXml"];
-        subject: bool [@params key "showSubject"];
-        room: bool [@params key "showClassroom"];
-        start_moment: bool [@params key "showStartMoments"];
-        note: bool [@params key "showNote"];
-        daily: bool [@params key "showDaynewpage"];
-        color: bool [@params key "showColor"];
-        empty: bool [@params key "showEmpty"];
+        subject: Binary.t [@params key "showSubject"];
+        room: Binary.t [@params key "showClassroom"];
+        start_moment: Binary.t [@params key "showStartMoments"];
+        note: Binary.t [@params key "showNote"];
+        daily: Binary.t [@params key "showDaynewpage"];
+        color: Binary.t [@params key "showColor"];
+        empty: Binary.t [@params key "showEmpty"];
         filter: filter;
       } [@@deriving params]
     end
