@@ -11,4 +11,7 @@ let to_xml_light l =
   List.map string_of_int l |>
   Names.to_xml_light
 
-let params l = ["", String.concat "," (List.map string_of_int l)]
+let params =
+  let fwd l = String.concat "," (List.map string_of_int l) in
+  let bwd s = String.split_on_char ',' s |> List.map int_of_string in
+  Params.Simple {fwd; bwd}

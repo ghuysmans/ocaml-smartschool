@@ -7,6 +7,17 @@ type 'a derived =
   | Complex of ('a, param list) iso
 type 'a attribute = Key of string
 
+let map t b f =
+  let map {fwd; bwd} =
+    {
+      fwd = (fun x -> fwd (f x));
+      bwd = fun y -> b (bwd y)
+    }
+  in
+  match t with
+  | Simple i -> Simple (map i)
+  | Complex i -> Complex (map i)
+
 module D = struct
   let key x = Key x
 
@@ -22,6 +33,16 @@ module D = struct
 
   let params_int = Simple {fwd = string_of_int; bwd = int_of_string}
   let params_string = let id x = x in Simple {fwd = id; bwd = id}
+
+  let add_const x l =
+    match x with
+    | Simple _ -> failwith "add_const"
+    | Complex {fwd; bwd} -> Complex {bwd; fwd = fun x -> fwd x @ l}
+
+  let map_xml f g =
+    let fwd x = Xml.to_string (f x) in
+    let bwd y = g (Xml.parse_string y) in
+    Simple {fwd; bwd}
 end
 
 module T = struct
@@ -29,14 +50,7 @@ module T = struct
   type nonrec 'a attribute = 'a attribute
 end
 
-let apply_iso t f b =
-  match t with
-  | Simple _ -> failwith "apply_iso"
-  | Complex {fwd; bwd} ->
-    Complex {
-      fwd = (fun x -> fwd (f x));
-      bwd = fun y -> b (bwd y)
-    }
+let apply_iso = map
 
 open Ppx_type_directed_value_runtime.Type_directed
 

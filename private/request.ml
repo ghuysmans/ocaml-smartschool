@@ -24,7 +24,11 @@ let command_to_xml_light c =
     Command.to_xml_light {
       subsystem;
       action;
-      params = Params.to_xml_light {l = f p};
+      params = Params.to_xml_light {l =
+        match f with
+        | Params.Complex {fwd; _} -> fwd p
+        | _ -> failwith "command_to_xml_light"
+      };
     }
   in
   match c with
@@ -47,9 +51,37 @@ let command_to_xml_light c =
   | Unknown c ->
     Command.to_xml_light c
 
+let command_of_xml_light_exn x =
+  let open Command in
+  let f p =
+    let open Params in
+    match p with
+    | Complex {bwd; _} -> fun y -> bwd (of_xml_light_exn y).l
+    | _ -> failwith "command_of_xml_light"
+  in
+  match of_xml_light_exn x with
+  | {subsystem = "agenda"; action = "show form"; params} ->
+    Assignments (f Agenda.Assignment.Command.params params)
+  | {subsystem = "agenda"; action = "get lessons"; params} ->
+    Lessons (f Agenda.Query.Command.params params)
+  | {subsystem = "agenda"; action = "save form"; params} ->
+    Lesson_edit (f Agenda.Edit.Command.params params)
+  | {subsystem = "print"; action = "get teacher list pdf"; params} ->
+    Teacher_print (f Agenda.Print.Teacher_list.Command.params params)
+  | {subsystem = "postboxes"; action = "message list"; params} ->
+    Messages (f Postboxes.Query.Command.params params)
+  | {subsystem = "postboxes"; action = "show message"; params} ->
+    Message (f Postboxes.Fetch_message.Command.params params)
+  | {subsystem = "postboxes"; action = "attachment list"; params} ->
+    Attachments (f Postboxes.Query_attachments.Command.params params)
+  | {subsystem = "postboxes"; action = "delete messages"; params} ->
+    Message_delete (f Postboxes.Delete.Command.params params)
+  | c ->
+    Unknown c
+
 type t = {
   l: command list [@key "command"];
-} [@@deriving to_protocol ~driver:(module Xml_light)]
+} [@@deriving protocol ~driver:(module Xml_light)]
 
 let to_xml_light t =
   match to_xml_light t with

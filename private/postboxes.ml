@@ -10,22 +10,26 @@ module Box = struct
     (* FIXME smartbox with an id (harder for Xml?) *)
     [@@deriving protocol ~driver:(module Xml_light)]
 
-  let params x =
-    let bt, bi =
-      match x with
-      | Inbox -> "inbox", 0
-      | Outbox -> "outbox", 0
-      | Draft -> "draft", 0
-      | Trash -> "trash", 0
-    in
-    ["boxType", bt; "boxID", string_of_int bi]
-
   let of_string = function
     | "inbox" -> Inbox
     | "outbox" -> Outbox
     | "draft" -> Draft
     | "trash" -> Trash
     | _ -> failwith "Postboxes.Box.of_string"
+
+  let params =
+    let fwd x =
+      let bt, bi =
+        match x with
+        | Inbox -> "inbox", 0
+        | Outbox -> "outbox", 0
+        | Draft -> "draft", 0
+        | Trash -> "trash", 0
+      in
+      ["boxType", bt; "boxID", string_of_int bi]
+    in
+    let bwd l = of_string ( List.assoc "boxType" l) in
+    Params.Complex {fwd; bwd}
 end
 
 module Query = struct
@@ -62,8 +66,8 @@ module Query = struct
       box: Box.t;
     } [@@deriving params]
 
-    let params x =
-      params x @ [
+    let params =
+      add_const params [
         "sortField", "date"; (* TODO *)
         "sortKey", "desc";
         "poll", "false";
@@ -109,8 +113,8 @@ module Fetch_message = struct
       id: int [@params key "msgID"];
     } [@@deriving params]
 
-    let params x =
-      params x @ [
+    let params =
+      add_const params [
         "limitList", "true";
       ]
   end
@@ -142,8 +146,8 @@ module Query_attachments = struct
       id: int [@params key "msgID"];
     } [@@deriving params]
 
-    let params x =
-      params x @ [
+    let params =
+      add_const params [
         "limitList", "true";
       ]
   end

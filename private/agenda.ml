@@ -99,8 +99,8 @@ module Assignment = struct
       class_ids: Ids.t [@params key "classIDs"];
     } [@@deriving params]
 
-    let params x =
-      params x @ [
+    let params =
+      add_const params [
         "filterType", "false";
         "filterID", "false";
         "dateID", "";
@@ -133,14 +133,24 @@ type filter =
   | Class of int
   | Teacher of int
 
-let params_filter x =
-  let ft, fi =
-    match x with
-    | Any -> "false", "false"
-    | Class c -> "Class", string_of_int c
-    | Teacher t -> "Teacher", string_of_int t
+let params_filter =
+  let fwd x =
+    let ft, fi =
+      match x with
+      | Any -> "false", "false"
+      | Class c -> "Class", string_of_int c
+      | Teacher t -> "Teacher", string_of_int t
+    in
+    ["filterType", ft; "filterID", fi]
   in
-  ["filterType", ft; "filterID", fi]
+  let bwd l =
+    match List.assoc "filterType" l, List.assoc "filterID" l with
+    | "false", "false" -> Any
+    | "Class", x -> Class (int_of_string x)
+    | "Teacher", x -> Teacher (int_of_string x)
+    | _ -> failwith "filterType"
+  in
+  Params.Complex {fwd; bwd}
 
 module Query = struct
   module Action_data = struct
@@ -183,8 +193,8 @@ module Query = struct
       filter: filter;
     } [@@deriving params]
 
-    let params x =
-      params x @ [
+    let params =
+      add_const params [
         "gridType", "2";
         "classID", "0";
         "endDateTimestampOld", "1655533390"; (* FIXME? *)
@@ -201,18 +211,18 @@ module Edit = struct
     type text = {
       text: string;
       moment_id: int [@key "momentid"];
-    } [@@deriving to_protocol ~driver:(module Xml_light)]
+    } [@@deriving protocol ~driver:(module Xml_light)]
 
     type subjects = {
       subject: text;
-    } [@@deriving to_protocol ~driver:(module Xml_light)]
+    } [@@deriving protocol ~driver:(module Xml_light)]
 
     type notes = {
       note: text;
-    } [@@deriving to_protocol ~driver:(module Xml_light)]
+    } [@@deriving protocol ~driver:(module Xml_light)]
 
     (* FIXME *)
-    type nil = string [@@deriving to_protocol ~driver:(module Xml_light)]
+    type nil = string [@@deriving protocol ~driver:(module Xml_light)]
 
     type xml = {
       moment_id: int [@key "momentid"];
@@ -220,14 +230,14 @@ module Edit = struct
       notes: notes;
       assignments: Assignment.l;
       unique_ids: nil [@key "uniqueids"];
-    } [@@deriving to_protocol ~driver:(module Xml_light)]
+    } [@@deriving protocol ~driver:(module Xml_light)]
 
     let xml_to_xml_light t =
       match xml_to_xml_light t with
       | Xml.Element (_, _, ch) -> Xml.Element ("xml", [], ch)
       | _ -> failwith "Edit.Request.xml_to_xml_light"
 
-    let params_xml x = ["", Xml.to_string (xml_to_xml_light x)]
+    let params_xml = map_xml xml_to_xml_light xml_of_xml_light_exn
 
     type t = {
       start: int [@params key "startDateTimestamp"];
@@ -238,8 +248,8 @@ module Edit = struct
       filter: filter;
     } [@@deriving params]
 
-    let params x =
-      params x @ [
+    let params =
+      add_const params [
         "gridType", "2";
         "filterMemory", "0";
         "copySubject", "0";
@@ -276,23 +286,23 @@ module Print = struct
   module Teacher_list = struct
     module Command = struct
       (* FIXME *)
-      type assignment_type = int [@@deriving to_protocol ~driver:(module Xml_light)]
+      type assignment_type = int [@@deriving protocol ~driver:(module Xml_light)]
       let all_assignment_types = [1; 5; 6; 8; 10; 12]
 
       type items = {
         l: assignment_type list [@key "item"];
-      } [@@deriving to_protocol ~driver:(module Xml_light)]
+      } [@@deriving protocol ~driver:(module Xml_light)]
 
       type xml = {
         items: items;
-      } [@@deriving to_protocol ~driver:(module Xml_light)]
+      } [@@deriving protocol ~driver:(module Xml_light)]
 
       let xml_to_xml_light t =
         match xml_to_xml_light t with
         | Xml.Element (_, _, ch) -> Xml.Element ("xml", [], ch)
         | _ -> failwith "Print.Teacher_list.Request.xml_to_xml_light"
 
-      let params_xml x = ["", Xml.to_string (xml_to_xml_light x)]
+      let params_xml = map_xml xml_to_xml_light xml_of_xml_light_exn
 
       type t = {
         start: int [@params key "startDateTimestamp"];
