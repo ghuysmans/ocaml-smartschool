@@ -68,7 +68,7 @@ module Agenda = struct
 
   let call = call "Agenda"
 
-  let lessons ctx ?(filter=Any) start end_ =
+  let lessons ctx ?filter start end_ =
     call ctx [Request.Lessons {start; end_; filter}] >>= function
       | [Response.Lessons l] -> Lwt.return l
       | _ -> Lwt.fail_with "Agenda.lessons"
@@ -92,7 +92,7 @@ module Agenda = struct
         Lwt.return (l, [])
     )
 
-  let edit ctx ?(filter=Any) ?(assignments=[]) ~start ~end_ ~moment_id ~lesson_id ?color ?note ?subject t =
+  let edit ctx ?filter ?(assignments=[]) ~start ~end_ ~moment_id ~lesson_id ?color ?note ?subject t =
     let req =
       let open Query.Action_data in
       Request.Lesson_edit {
@@ -154,10 +154,7 @@ module Agenda = struct
           start; end_;
           assignment_types = {items = {l}};
           subject; room; start_moment; note; daily; color; empty;
-          filter =
-            match teacher with
-            | Some x -> Teacher x
-            | None -> Any
+          filter = Option.map (fun x -> Teacher x) teacher;
         }
       in
       call ctx [req] >>= function

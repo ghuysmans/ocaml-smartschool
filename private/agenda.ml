@@ -114,25 +114,26 @@ module Assignment = struct
 end
 
 type filter =
-  | Any
   | Class of int
   | Teacher of int
 
-let params_filter =
+type filter_opt = filter option
+
+let params_filter_opt =
   let fwd x =
     let ft, fi =
       match x with
-      | Any -> "false", "false"
-      | Class c -> "Class", string_of_int c
-      | Teacher t -> "Teacher", string_of_int t
+      | None -> "false", "false"
+      | Some (Class c) -> "Class", string_of_int c
+      | Some (Teacher t) -> "Teacher", string_of_int t
     in
     ["filterType", ft; "filterID", fi]
   in
   let bwd l =
     match List.assoc "filterType" l, List.assoc "filterID" l with
-    | "false", "false" -> Any
-    | "Class", x -> Class (int_of_string x)
-    | "Teacher", x -> Teacher (int_of_string x)
+    | "false", "false" -> None
+    | "Class", x -> Some (Class (int_of_string x))
+    | "Teacher", x -> Some (Teacher (int_of_string x))
     | _ -> failwith "filterType"
   in
   Params.Complex {fwd; bwd}
@@ -175,7 +176,7 @@ module Query = struct
     type t = {
       start: int [@params key "startDateTimestamp"];
       end_: int [@params key "endDateTimestamp"];
-      filter: filter;
+      filter: filter_opt;
     } [@@deriving params]
 
     let params =
@@ -230,7 +231,7 @@ module Edit = struct
       xml: xml [@params key "xmlString"];
       lesson_id: int [@params key "lessonID"];
       color: string;
-      filter: filter;
+      filter: filter_opt;
     } [@@deriving params]
 
     let params =
@@ -316,7 +317,7 @@ module Print = struct
         daily: Binary.t [@params key "showDaynewpage"];
         color: Binary.t [@params key "showColor"];
         empty: Binary.t [@params key "showEmpty"];
-        filter: filter;
+        filter: filter_opt;
       } [@@deriving params]
     end
   end
