@@ -1,9 +1,10 @@
 open Protocol_conv_xml
 
 type param = string * string
-type 'a iso =
-  | Simple of {to_string: 'a -> string; of_string: string -> 'a}
-  | Complex of {fwd: 'a -> param list; bwd: param list -> 'a}
+type ('a, 'b) iso = {fwd: 'a -> 'b; bwd: 'b -> 'a}
+type 'a derived =
+  | Simple of ('a, string) iso
+  | Complex of ('a, param list) iso
 type 'a attribute = Key of string
 
 module D = struct
@@ -11,20 +12,20 @@ module D = struct
 
   let params_bool =
     Simple {
-      to_string = (fun x -> if x then "true" else "false");
-      of_string = (function
+      fwd = (fun x -> if x then "true" else "false");
+      bwd = (function
         | "true" -> true
         | "false" -> false
         | _ -> failwith "params_bool"
       )
     }
 
-  let params_int = Simple {to_string = string_of_int; of_string = int_of_string}
-  let params_string = let id x = x in Simple {to_string = id; of_string = id}
+  let params_int = Simple {fwd = string_of_int; bwd = int_of_string}
+  let params_string = let id x = x in Simple {fwd = id; bwd = id}
 end
 
 module T = struct
-  type nonrec 'a t = 'a iso
+  type nonrec 'a t = 'a derived
   type nonrec 'a attribute = 'a attribute
 end
 
@@ -42,24 +43,24 @@ open Ppx_type_directed_value_runtime.Type_directed
 let rec of_record : type a len. (a, len) Record(T).t -> a T.t = fun r ->
   let fwd v x =
     match v.Key.value with
-    | Simple {to_string; _} ->
+    | Simple {fwd; _} ->
       let name =
         match v.attribute with
         | Some (Key k) -> k
         | None -> v.name
       in
-      [name, to_string x]
+      [name, fwd x]
     | Complex {fwd; _} -> fwd x
   in
   let bwd l v =
     match v.Key.value with
-    | Simple {of_string; _} ->
+    | Simple {bwd; _} ->
       let name =
         match v.attribute with
         | Some (Key k) -> k
         | None -> v.name
       in
-      of_string (List.assoc name l)
+      bwd (List.assoc name l)
     | Complex {bwd; _} -> bwd l
   in
   match r with
@@ -70,7 +71,7 @@ let rec of_record : type a len. (a, len) Record(T).t -> a T.t = fun r ->
     }
   | v :: (_ :: _ as tl) ->
     match of_record tl with
-    | Simple _ -> failwith "of_record got Simple"
+    | Simple _ -> failwith "of_record got simple"
     | Complex {fwd = fwd'; bwd = bwd'} ->
       Complex {
         fwd = (fun (x, y) -> fwd v x @ fwd' y);
