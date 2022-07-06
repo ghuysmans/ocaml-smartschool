@@ -265,6 +265,22 @@ module Stream_file = struct
       content: content;
     } [@@deriving of_protocol ~driver:(module Xml_light)]
   end
+
+  module Request = struct
+    type t = {
+      extension: string;
+      random: string;
+      title: string;
+      file_size: int [@key "filesize"];
+    } [@@deriving params]
+
+    let params =
+      add_const params [
+        "module", "Agenda";
+        "file", "stream";
+        "function", "streamFile";
+      ]
+  end
 end
 
 module Print = struct

@@ -126,15 +126,13 @@ module Agenda = struct
 
   let stream ({base; ctx; _} as c) ?fn (n : Stream_file.Notification_data.content) =
     let uri =
-      Uri.add_query_params' base [
-        "module", "Agenda";
-        "file", "stream";
-        "function", "streamFile";
-        "extension", n.extension;
-        "random", n.random;
-        "title", n.title;
-        "filesize", string_of_int n.filesize;
-      ]
+      Stream_file.Request.(Params.to_assoc params {
+        extension = n.extension;
+        random = n.random;
+        title = n.title;
+        file_size = n.filesize;
+      }) |>
+      Uri.add_query_params' base
     in
     let headers = headers c in
     C.get ~ctx ~headers uri >>= fun (resp, body) ->
