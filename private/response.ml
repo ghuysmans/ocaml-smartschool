@@ -12,6 +12,7 @@ type action =
   | Nil
   | Lessons of Agenda.Query.Action_data.lesson list
   | Assignments of Agenda.Assignment.t list
+  | Assignment_types of Agenda.Assignment_type.t list
   | Agenda_notification of Agenda.Stream_file.Notification_data.content
   | Messages of Postboxes.Query.Action_data.message list
   | Message of Postboxes.Fetch_message.Action_data.message
@@ -22,6 +23,10 @@ type action =
 let action_of_xml_light_exn x =
   let open Action in
   match of_xml_light_exn x with
+  | {subsystem = "print"; command = "handle assignment types"; data} ->
+    let open Agenda.Assignment_type.Action_data in
+    let {a = {l}} = of_xml_light_exn data in
+    Assignment_types l
   | {subsystem = "agenda"; command = "handle lessons"; data} ->
     let open Agenda.Query.Action_data in
     let {content = {lessons = {l}}} = of_xml_light_exn data in

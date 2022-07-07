@@ -8,6 +8,7 @@ module Make : functor (C : Cohttp_lwt.S.Client) ->
       sig
         type lesson = Agenda.Query.Action_data.lesson
         type assignment = Agenda.Assignment.t
+        type assignment_type = Agenda.Assignment_type.t
         type filter = Agenda.filter
         type command
 
@@ -44,12 +45,15 @@ module Make : functor (C : Cohttp_lwt.S.Client) ->
           ?subject:string ->
           lesson -> unit Lwt.t
 
+        val assignment_types : context -> assignment_type list Lwt.t
+
         module Print :
           sig
             val teacher_list :
               ?teacher:int ->
               ?fn:string ->
               context ->
+              typ:assignment_type list ->
               start:int ->
               end_:int ->
               subject:bool ->

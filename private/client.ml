@@ -54,6 +54,7 @@ module Agenda = struct
 
   type lesson = Query.Action_data.lesson
   type assignment = Assignment.t
+  type assignment_type = Agenda.Assignment_type.t
   type nonrec filter = filter
   type command = Request.command
 
@@ -146,10 +147,15 @@ module Agenda = struct
     | `Unauthorized -> Lwt.fail_with "session expired"
     | x -> Lwt.fail_with @@ Cohttp.Code.string_of_status x
 
+  let assignment_types ctx =
+    call ctx [Request.Assignment_types] >>= function
+      | [Response.Assignment_types l] -> Lwt.return l
+      | _ -> Lwt.fail_with "Agenda.assignment_types"
+
   module Print = struct
-    let teacher_list ?teacher ?fn ctx ~start ~end_ ~subject ~room ~start_moment ~note ~daily ~color ~empty =
+    let teacher_list ?teacher ?fn ctx ~typ ~start ~end_ ~subject ~room ~start_moment ~note ~daily ~color ~empty =
       let req =
-        let l = Agenda.Print.Teacher_list.Command.all_assignment_types in
+        let l = List.map (fun {Agenda.Assignment_type.id; _} -> id) typ in
         Request.Teacher_print {
           start; end_;
           assignment_types = {items = {l}};

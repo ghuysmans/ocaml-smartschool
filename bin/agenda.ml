@@ -14,10 +14,12 @@ let () = Lwt_main.run (
   let print ?teacher d m y =
     let start, end_ = get_dates d m y in
     let ctx = get_ctx () in
+    let%lwt typ = Agenda.assignment_types ctx in
     let%lwt fn =
       Agenda.Print.teacher_list
         ?teacher
         ctx
+        ~typ
         ~start ~end_
         ~subject:true ~note:true
         ~room:false ~start_moment:true

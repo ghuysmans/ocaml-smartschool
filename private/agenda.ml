@@ -1,6 +1,35 @@
 open Protocol_conv_xml
 open Params.D
 
+module Assignment_type = struct
+  type id = int [@@deriving protocol ~driver:(module Xml_light)]
+
+  type t = {
+    id: id [@key "atID"];
+    typ: int [@key "type"];
+    description: string;
+    abbreviation: string;
+  } [@@deriving protocol ~driver:(module Xml_light)]
+
+  module Action_data = struct
+    type l = {
+      l: t list [@key "assignmentType"];
+    } [@@deriving protocol ~driver:(module Xml_light)]
+
+    type t = {
+      a: l [@key "assignmentTypes"];
+    } [@@deriving protocol ~driver:(module Xml_light)]
+  end
+
+  module Command = struct
+    let params =
+      Params.Complex {
+        fwd = (fun () -> []);
+        bwd = ignore;
+      }
+  end
+end
+
 module Assignment = struct
   type end_moment = {
     class_id: int;
@@ -287,12 +316,8 @@ end
 module Print = struct
   module Teacher_list = struct
     module Command = struct
-      (* FIXME *)
-      type assignment_type = int [@@deriving protocol ~driver:(module Xml_light)]
-      let all_assignment_types = [1; 5; 6; 8; 10; 12]
-
       type items = {
-        l: assignment_type list [@key "item"];
+        l: Assignment_type.id list [@key "item"];
       } [@@deriving protocol ~driver:(module Xml_light)]
 
       type xml = {
