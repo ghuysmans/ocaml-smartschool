@@ -54,7 +54,7 @@ let apply_iso = map
 
 open Ppx_type_directed_value_runtime.Type_directed
 
-let rec of_record : type a len. (a, len) Record(T).t -> a T.t = fun r ->
+let rec of_record : type a len. (a, len) Record(T).t -> (a, param list) iso = fun r ->
   let fwd v x =
     match v.Key.value with
     | Simple {fwd; _} ->
@@ -79,18 +79,18 @@ let rec of_record : type a len. (a, len) Record(T).t -> a T.t = fun r ->
   in
   match r with
   | [ v ] ->
-    Complex {
+    {
       fwd = (fun (x, ()) -> fwd v x);
       bwd = (fun l -> bwd l v, ())
     }
   | v :: (_ :: _ as tl) ->
-    match of_record tl with
-    | Simple _ -> failwith "of_record got simple"
-    | Complex {fwd = fwd'; bwd = bwd'} ->
-      Complex {
-        fwd = (fun (x, y) -> fwd v x @ fwd' y);
-        bwd = fun l -> bwd l v, bwd' l
-      }
+    let {fwd = fwd'; bwd = bwd'} = of_record tl in
+    {
+      fwd = (fun (x, y) -> fwd v x @ fwd' y);
+      bwd = fun l -> bwd l v, bwd' l
+    }
+
+let of_record r = Complex (of_record r)
 
 let param_to_xml_light (name, value) =
   let v = if value = "" then [] else [Xml.PCData value] in
