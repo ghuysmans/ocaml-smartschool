@@ -3,11 +3,12 @@ open Protocol_conv_xml
 type param = string * string
 type ('a, 'b) iso = {fwd: 'a -> 'b; bwd: 'b -> 'a}
 type 'a derived =
-  | Simple of ('a, string) iso
-  | Complex of ('a, param list) iso
+  | Simple : ('a, string) iso -> 'a derived
+  | Complex : ('a, param list) iso -> 'a derived
+  | Option : ('a, string) iso -> 'a option derived
 type 'a attribute = Key of string
 
-let map t b f =
+let map : type a. a derived -> (a -> 'b) -> ('b -> a) -> 'b derived = fun t b f ->
   let map {fwd; bwd} =
     {
       fwd = (fun x -> fwd (f x));
@@ -17,6 +18,7 @@ let map t b f =
   match t with
   | Simple i -> Simple (map i)
   | Complex i -> Complex (map i)
+  | Option _ -> failwith "Params.map"
 
 module D = struct
   let key x = Key x
@@ -36,13 +38,17 @@ module D = struct
 
   let add_const x l =
     match x with
-    | Simple _ -> failwith "add_const"
     | Complex {fwd; bwd} -> Complex {bwd; fwd = fun x -> fwd x @ l}
+    | _ -> failwith "add_const"
 
   let map_xml f g =
     let fwd x = Xml.to_string (f x) in
     let bwd y = g (Xml.parse_string y) in
     Simple {fwd; bwd}
+
+  let params_option = function
+    | Simple i -> Option i
+    | _ -> failwith "params_option"
 end
 
 module T = struct
@@ -60,15 +66,17 @@ let rec of_record : type a len. (a, len) Record(T).t -> (a, param list) iso = fu
     | Some (Key k) -> k
     | None -> v.name
   in
-  let fwd v x =
+  let fwd : type a. (a derived, _) Key.t -> a -> param list = fun v x ->
     match v.Key.value with
     | Simple {fwd; _} -> [name v, fwd x]
     | Complex {fwd; _} -> fwd x
+    | Option {fwd; _} -> Option.to_list x |> List.map (fun s -> name v, fwd s)
   in
-  let bwd l v =
+  let bwd : type a. param list -> (a derived, _) Key.t -> a = fun l v ->
     match v.Key.value with
     | Simple {bwd; _} -> bwd (List.assoc (name v) l)
     | Complex {bwd; _} -> bwd l
+    | Option {bwd; _} -> Option.map bwd (List.assoc_opt (name v) l)
   in
   match r with
   | [ v ] ->
