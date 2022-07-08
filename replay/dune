@@ -1,0 +1,3 @@
+(library
+ (name replay)
+ (libraries smartschool_private har-replay))
