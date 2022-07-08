@@ -100,7 +100,7 @@ let param_to_xml_light (name, value) =
 let param_of_xml_light_exn = function
   | Xml.(Element ("param", ["name", name], [])) -> name, ""
   | Xml.(Element ("param", ["name", name], [PCData value])) -> name, value
-  | _ -> failwith "Params.of_xml_light_exn"
+  | _ -> failwith "param_of_xml_light_exn"
 
 type t = {
   l: param list [@key "param"];
@@ -109,4 +109,9 @@ type t = {
 let to_assoc p x =
   match p with
   | Complex {fwd; _} -> fwd x
-  | _ -> failwith "params_to_assoc"
+  | _ -> failwith "Params.to_assoc"
+
+let of_assoc p x =
+  match p with
+  | Complex {bwd; _} -> bwd x
+  | _ -> failwith "Params.of_assoc"

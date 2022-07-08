@@ -52,12 +52,7 @@ let command_to_xml_light c =
 
 let command_of_xml_light_exn x =
   let open Command in
-  let f p =
-    let open Params in
-    match p with
-    | Complex {bwd; _} -> fun y -> bwd (of_xml_light_exn y).l
-    | _ -> failwith "command_of_xml_light"
-  in
+  let f p x = Params.(of_assoc p (of_xml_light_exn x).l) in
   match of_xml_light_exn x with
   | {subsystem = "agenda"; action = "get assignment types"; _} ->
     Assignment_types
