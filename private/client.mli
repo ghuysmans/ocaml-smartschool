@@ -14,7 +14,8 @@ module Make : functor (C : Cohttp_lwt.S.Client) ->
 
         val timestamp : y:int -> m:int -> d:int -> int
 
-        val call : context -> command list -> Response.action list Lwt.t
+        val call : context -> command list -> Response.response list Lwt.t
+        val call1 : context -> command -> Response.action list Lwt.t
 
         val lessons : context -> ?filter:filter -> int -> int -> lesson list Lwt.t
 
@@ -74,7 +75,8 @@ module Make : functor (C : Cohttp_lwt.S.Client) ->
 
         val box_of_string : string -> box
 
-        val call : context -> command list -> Response.action list Lwt.t
+        val call : context -> command list -> Response.response list Lwt.t
+        val call1 : context -> command -> Response.action list Lwt.t
 
         val messages : context -> box -> item list Lwt.t
 

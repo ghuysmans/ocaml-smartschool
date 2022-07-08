@@ -65,5 +65,5 @@ type response = {
 } [@@deriving of_protocol ~driver:(module Xml_light)]
 
 type t = { (* server *)
-  response: response;
+  l: response list [@key "response"];
 } [@@deriving of_protocol ~driver:(module Xml_light)]

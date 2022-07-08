@@ -41,13 +41,17 @@ let call mod_ ({ctx; base; _} as c) l =
     Cohttp_lwt.Body.to_string body >|=
     Xml.parse_string >|=
     Response.of_xml_light >>= begin function
-      | Ok {response = {status = "ok"; actions = {l}}} -> Lwt.return l
-      | Ok {response = {status; _}} -> Lwt.fail_with status
+      | Ok {l} -> Lwt.return l
       | Error e ->
         Lwt.fail_with (Protocol_conv_xml.Xml_light.error_to_string_hum e)
     end
   | `Unauthorized -> Lwt.fail_with "session expired"
   | x -> Lwt.fail_with @@ Cohttp.Code.string_of_status x
+
+let call1 mod_ c command =
+  call mod_ c [command] >>= function
+    | [{Response.status = "ok"; actions = {l}}] -> Lwt.return l
+    | _ -> Lwt.fail_with "Client.call1"
 
 module Agenda = struct
   open Agenda
@@ -68,14 +72,15 @@ module Agenda = struct
     int_of_float (fst (mktime tm))
 
   let call = call "Agenda"
+  let call1 = call1 "Agenda"
 
   let lessons ctx ?filter start end_ =
-    call ctx [Request.Lessons {start; end_; filter}] >>= function
+    call1 ctx (Request.Lessons {start; end_; filter}) >>= function
       | [Response.Lessons l] -> Lwt.return l
       | _ -> Lwt.fail_with "Agenda.lessons"
 
   let assignments ctx ?(class_ids=[]) ~lesson_id moment_id =
-    call ctx [Request.Assignments {class_ids; lesson_id; moment_id}] >>= function
+    call1 ctx (Request.Assignments {class_ids; lesson_id; moment_id}) >>= function
       | [Response.Assignments l] -> Lwt.return l
       | _ -> Lwt.fail_with "Agenda.assignments"
 
@@ -121,7 +126,7 @@ module Agenda = struct
         filter;
       }
     in
-    call ctx [req] >>= function
+    call1 ctx req >>= function
       | [Response.Lessons _] -> Lwt.return ()
       | _ -> Lwt.fail_with "Agenda.edit"
 
@@ -148,7 +153,7 @@ module Agenda = struct
     | x -> Lwt.fail_with @@ Cohttp.Code.string_of_status x
 
   let assignment_types ctx =
-    call ctx [Request.Assignment_types] >>= function
+    call1 ctx Request.Assignment_types >>= function
       | [Response.Assignment_types l] -> Lwt.return l
       | _ -> Lwt.fail_with "Agenda.assignment_types"
 
@@ -163,7 +168,7 @@ module Agenda = struct
           filter = Option.map (fun x -> Teacher x) teacher;
         }
       in
-      call ctx [req] >>= function
+      call1 ctx req >>= function
         | [Response.Agenda_notification x] -> stream ctx ?fn x
         | _ -> Lwt.fail_with "Agenda.Print.teacher_list"
   end
@@ -181,19 +186,20 @@ module Postboxes = struct
   let box_of_string = Box.of_string
 
   let call = call "Messages"
+  let call1 = call1 "Messages"
 
   let messages ctx box =
-    call ctx [Request.Messages {box}] >>= function
+    call1 ctx (Request.Messages {box}) >>= function
       | [Response.Messages l; Unknown _; Unknown _] -> Lwt.return l
       | _ -> Lwt.fail_with "Postboxes.messages"
 
   let message ctx box id =
-    call ctx [Request.Message {box; id}] >>= function
-      | [Response.Message m] -> Lwt.return m
+    call1 ctx (Request.Message {box; id}) >>= function
+      | Response.Message m :: _ -> Lwt.return m
       | _ -> Lwt.fail_with "Postboxes.message"
 
   let attachments ctx box id =
-    call ctx [Request.Attachments {box; id}] >>= function
+    call1 ctx (Request.Attachments {box; id}) >>= function
       | [Response.Attachments l] -> Lwt.return l
       | _ -> Lwt.fail_with "Postboxes.attachments"
 
@@ -247,7 +253,7 @@ module Postboxes = struct
     | x -> Lwt.fail_with @@ Cohttp.Code.string_of_status x
 
   let delete ctx box id =
-    call ctx [Request.Message_delete {box; id}] >>= function
+    call1 ctx (Request.Message_delete {box; id}) >>= function
       | [Response.Message_delete] -> Lwt.return ()
       | _ -> Lwt.fail_with "Postboxes.delete"
 end
