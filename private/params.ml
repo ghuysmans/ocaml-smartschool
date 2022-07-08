@@ -55,26 +55,19 @@ let apply_iso = map
 open Ppx_type_directed_value_runtime.Type_directed
 
 let rec of_record : type a len. (a, len) Record(T).t -> (a, param list) iso = fun r ->
+  let name v =
+    match v.Key.attribute with
+    | Some (Key k) -> k
+    | None -> v.name
+  in
   let fwd v x =
     match v.Key.value with
-    | Simple {fwd; _} ->
-      let name =
-        match v.attribute with
-        | Some (Key k) -> k
-        | None -> v.name
-      in
-      [name, fwd x]
+    | Simple {fwd; _} -> [name v, fwd x]
     | Complex {fwd; _} -> fwd x
   in
   let bwd l v =
     match v.Key.value with
-    | Simple {bwd; _} ->
-      let name =
-        match v.attribute with
-        | Some (Key k) -> k
-        | None -> v.name
-      in
-      bwd (List.assoc name l)
+    | Simple {bwd; _} -> bwd (List.assoc (name v) l)
     | Complex {bwd; _} -> bwd l
   in
   match r with
