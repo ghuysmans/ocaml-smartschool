@@ -29,7 +29,7 @@ module Box = struct
       ["boxType", bt; "boxID", string_of_int bi]
     in
     let bwd l = of_string ( List.assoc "boxType" l) in
-    Params.Complex (fun _ -> {fwd; bwd})
+    Params.Complex (fun _ _ -> {fwd; bwd})
 end
 
 module Query = struct

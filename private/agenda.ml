@@ -23,7 +23,7 @@ module Assignment_type = struct
 
   module Command = struct
     let params =
-      Params.Complex (fun _ -> {
+      Params.Complex (fun _ _ -> {
         fwd = (fun () -> []);
         bwd = ignore;
       })
@@ -165,7 +165,7 @@ let params_filter_opt =
     | "Teacher", x -> Some (Teacher (int_of_string x))
     | _ -> failwith "filterType"
   in
-  Params.Complex (fun _ -> {fwd; bwd})
+  Params.Complex (fun _ _ -> {fwd; bwd})
 
 module Query = struct
   module Action_data = struct
