@@ -4,7 +4,7 @@ type param = string * string
 type ('a, 'b) iso = {fwd: 'a -> 'b; bwd: 'b -> 'a}
 type 'a derived =
   | Simple : ('a, string) iso -> 'a derived
-  | Complex : ('a, param list) iso -> 'a derived
+  | Complex : (string list -> ('a, param list) iso) -> 'a derived
   | Option : ('a, string) iso -> 'a option derived
 type 'a attribute = Key of string
 
@@ -17,7 +17,7 @@ let map : type a. a derived -> (a -> 'b) -> ('b -> a) -> 'b derived = fun t b f 
   in
   match t with
   | Simple i -> Simple (map i)
-  | Complex i -> Complex (map i)
+  | Complex f -> Complex (fun rpath -> map (f rpath))
   | Option _ -> failwith "Params.map"
 
 module D = struct
@@ -38,7 +38,11 @@ module D = struct
 
   let add_const x l =
     match x with
-    | Complex {fwd; bwd} -> Complex {bwd; fwd = fun x -> fwd x @ l}
+    | Complex f ->
+      Complex (fun rpath ->
+        let {fwd; bwd} = f rpath in
+        {bwd; fwd = fun x -> fwd x @ l}
+      )
     | _ -> failwith "add_const"
 
   let map_xml f g =
@@ -60,22 +64,23 @@ let apply_iso = map
 
 open Ppx_type_directed_value_runtime.Type_directed
 
-let rec of_record : type a len. (a, len) Record(T).t -> (a, param list) iso = fun r ->
-  let name v =
+let rec of_record : type a len. (a, len) Record(T).t -> string list -> (a, param list) iso = fun r rpath ->
+  let field v =
     match v.Key.attribute with
     | Some (Key k) -> k
     | None -> v.name
   in
+  let name v = String.concat "." (List.rev (field v :: rpath)) in
   let fwd : type a. (a derived, _) Key.t -> a -> param list = fun v x ->
     match v.Key.value with
     | Simple {fwd; _} -> [name v, fwd x]
-    | Complex {fwd; _} -> fwd x
+    | Complex f -> (f (field v :: rpath)).fwd x
     | Option {fwd; _} -> Option.to_list x |> List.map (fun s -> name v, fwd s)
   in
   let bwd : type a. param list -> (a derived, _) Key.t -> a = fun l v ->
     match v.Key.value with
     | Simple {bwd; _} -> bwd (List.assoc (name v) l)
-    | Complex {bwd; _} -> bwd l
+    | Complex f -> (f (field v :: rpath)).bwd l
     | Option {bwd; _} -> Option.map bwd (List.assoc_opt (name v) l)
   in
   match r with
@@ -85,7 +90,7 @@ let rec of_record : type a len. (a, len) Record(T).t -> (a, param list) iso = fu
       bwd = (fun l -> bwd l v, ())
     }
   | v :: (_ :: _ as tl) ->
-    let {fwd = fwd'; bwd = bwd'} = of_record tl in
+    let {fwd = fwd'; bwd = bwd'} = of_record tl rpath in
     {
       fwd = (fun (x, y) -> fwd v x @ fwd' y);
       bwd = fun l -> bwd l v, bwd' l
@@ -108,10 +113,10 @@ type t = {
 
 let to_assoc p x =
   match p with
-  | Complex {fwd; _} -> fwd x
+  | Complex f -> (f []).fwd x
   | _ -> failwith "Params.to_assoc"
 
 let of_assoc p x =
   match p with
-  | Complex {bwd; _} -> bwd x
+  | Complex f -> (f []).bwd x
   | _ -> failwith "Params.of_assoc"
