@@ -205,6 +205,7 @@ module Query = struct
     type t = {
       start: int [@params key "startDateTimestamp"];
       end_: int [@params key "endDateTimestamp"];
+      end_old: int [@params key "endDateTimestampOld"];
       filter: filter_opt;
     } [@@deriving params]
 
@@ -212,7 +213,6 @@ module Query = struct
       add_const params [
         "gridType", "2";
         "classID", "0";
-        "endDateTimestampOld", "1655533390"; (* FIXME? *)
         "forcedTeacher", "0";
         "forcedClass", "0";
         "forcedClassroom", "0";

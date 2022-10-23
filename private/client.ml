@@ -75,7 +75,7 @@ module Agenda = struct
   let call1 = call1 "Agenda"
 
   let lessons ctx ?filter start end_ =
-    call1 ctx (Request.Lessons {start; end_; filter}) >>= function
+    call1 ctx (Request.Lessons {start; end_; end_old = end_; filter}) >>= function
       | [Response.Lessons l] -> Lwt.return l
       | _ -> Lwt.fail_with "Agenda.lessons"
 
