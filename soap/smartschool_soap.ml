@@ -68,7 +68,7 @@ let send_message ~access_code ~from ~to_ ~title ?(lvs=false) ?(attachments=[]) b
       | `Int e -> Error (`Code e)
       | _ -> Error `NaN
   else
-    Lwt.fail_with "sendMsg"
+    Lwt.fail_with "sendMsg, wrong encoding?"
 
 
 let get_user ~access_code username =
